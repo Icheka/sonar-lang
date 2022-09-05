@@ -38,7 +38,12 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.PLUS, l.ch)
 		}
 	case '-':
-		tok = newToken(token.MINUS, l.ch)
+		if l.peekChar() == '-' {
+			l.readChar()
+			tok = newToken(token.POST_DECR, token.POST_DECR)
+		} else {
+			tok = newToken(token.MINUS, l.ch)
+		}
 	case '!':
 		if l.peekChar() == '=' {
 			ch := l.ch

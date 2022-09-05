@@ -87,6 +87,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.postfixParseFns = make(map[token.TokenType]postfixParseFn)
 	p.registerPostfix(token.POST_INCR, p.parsePostfixExpression)
+	p.registerPostfix(token.POST_DECR, p.parsePostfixExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()

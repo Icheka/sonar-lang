@@ -486,13 +486,24 @@ func evalPostfixExpression(env *object.Environment, node *ast.PostfixExpression)
 
 	switch node.Operator {
 	case token.POST_INCR:
-		v, ok := tok.(*object.Integer)
+		integer, ok := tok.(*object.Integer)
 		if !ok {
 			return newError("Left side of post-increment operator must be of type int, got %s", tokenLiteral)
 		}
-		newV := &object.Integer{Value: v.Value + 1}
-		env.Set(tokenLiteral, newV)
-		return newV
+
+		newInteger := &object.Integer{Value: integer.Value + 1}
+		env.Set(tokenLiteral, newInteger)
+		return newInteger
+
+	case token.POST_DECR:
+		integer, ok := tok.(*object.Integer)
+		if !ok {
+			return newError("Left side of post-decrement operator must be of type int, got %s", tokenLiteral)
+		}
+
+		newInteger := &object.Integer{Value: integer.Value - 1}
+		env.Set(tokenLiteral, newInteger)
+		return newInteger
 	}
 	return newError("Unknown operator %s", node.Operator)
 }
