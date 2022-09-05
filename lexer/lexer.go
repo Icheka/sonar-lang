@@ -31,9 +31,19 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
 	case '+':
-		tok = newToken(token.PLUS, l.ch)
+		if l.peekChar() == '+' {
+			l.readChar()
+			tok = newToken(token.POST_INCR, token.POST_INCR)
+		} else {
+			tok = newToken(token.PLUS, l.ch)
+		}
 	case '-':
-		tok = newToken(token.MINUS, l.ch)
+		if l.peekChar() == '-' {
+			l.readChar()
+			tok = newToken(token.POST_DECR, token.POST_DECR)
+		} else {
+			tok = newToken(token.MINUS, l.ch)
+		}
 	case '!':
 		if l.peekChar() == '=' {
 			ch := l.ch
@@ -152,6 +162,12 @@ func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+func newToken(tokenType token.TokenType, ch interface{}) token.Token {
+	if str, ok := ch.(string); ok {
+		return token.Token{Type: tokenType, Literal: str}
+	}
+	if b, ok := ch.(byte); ok {
+		return token.Token{Type: tokenType, Literal: string(b)}
+	}
+	panic("type of newToken[ch] expected to be string or byte")
 }

@@ -30,6 +30,9 @@ if (5 < 10) {
 "foo bar"
 [1, 2];
 {"foo": "bar"}
+++
+--
+|
 `
 
 	tests := []struct {
@@ -122,6 +125,9 @@ if (5 < 10) {
 		{token.COLON, ":"},
 		{token.STRING, "bar"},
 		{token.RBRACE, "}"},
+		{token.POST_INCR, "++"},
+		{token.POST_DECR, "--"},
+		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}
 
@@ -136,8 +142,8 @@ if (5 < 10) {
 		}
 
 		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tt.expectedLiteral, tok.Literal)
+			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q, type=%q",
+				i, tt.expectedLiteral, tok.Literal, tt.expectedType)
 		}
 	}
 }

@@ -34,8 +34,9 @@ var precedences = map[token.TokenType]int{
 }
 
 type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression
+	prefixParseFn  func() ast.Expression
+	infixParseFn   func(ast.Expression) ast.Expression
+	postfixParseFn func() ast.Expression
 )
 
 type Parser struct {
@@ -44,9 +45,11 @@ type Parser struct {
 
 	curToken  token.Token
 	peekToken token.Token
+	prevToken token.Token
 
-	prefixParseFns map[token.TokenType]prefixParseFn
-	infixParseFns  map[token.TokenType]infixParseFn
+	prefixParseFns  map[token.TokenType]prefixParseFn
+	infixParseFns   map[token.TokenType]infixParseFn
+	postfixParseFns map[token.TokenType]postfixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -82,6 +85,10 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 
+	p.postfixParseFns = make(map[token.TokenType]postfixParseFn)
+	p.registerPostfix(token.POST_INCR, p.parsePostfixExpression)
+	p.registerPostfix(token.POST_DECR, p.parsePostfixExpression)
+
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
 	p.nextToken()
@@ -90,6 +97,7 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) nextToken() {
+	p.prevToken = p.curToken
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
 }
@@ -204,6 +212,11 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	postfix := p.postfixParseFns[p.curToken.Type]
+	if postfix != nil {
+		return postfix()
+	}
+
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
@@ -289,6 +302,13 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	expression.Right = p.parseExpression(precedence)
 
 	return expression
+}
+
+func (p *Parser) parsePostfixExpression() ast.Expression {
+	return &ast.PostfixExpression{
+		Token:    p.prevToken,
+		Operator: p.curToken.Literal,
+	}
 }
 
 func (p *Parser) parseBoolean() ast.Expression {
@@ -488,4 +508,8 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 
 func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerPostfix(tokenType token.TokenType, fn postfixParseFn) {
+	p.postfixParseFns[tokenType] = fn
 }
