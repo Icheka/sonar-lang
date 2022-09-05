@@ -6,6 +6,7 @@ import (
 	"sonar/v2/object"
 	"sonar/v2/token"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -231,22 +232,26 @@ func evalIntegerInfixExpression(
 	rightVal := right.(*object.Integer).Value
 
 	switch operator {
-	case "+":
+	case token.PLUS:
 		return &object.Integer{Value: leftVal + rightVal}
-	case "-":
+	case token.MINUS:
 		return &object.Integer{Value: leftVal - rightVal}
-	case "*":
+	case token.ASTERISK:
 		return &object.Integer{Value: leftVal * rightVal}
-	case "/":
+	case token.SLASH:
 		return &object.Integer{Value: leftVal / rightVal}
-	case "<":
+	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
-	case ">":
+	case token.GT:
 		return nativeBoolToBooleanObject(leftVal > rightVal)
-	case "==":
+	case token.EQ:
 		return nativeBoolToBooleanObject(leftVal == rightVal)
-	case "!=":
+	case token.NOT_EQ:
 		return nativeBoolToBooleanObject(leftVal != rightVal)
+	case token.LTE:
+		return nativeBoolToBooleanObject(leftVal <= rightVal)
+	case token.GTE:
+		return nativeBoolToBooleanObject(leftVal >= rightVal)
 	default:
 		return newError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
@@ -257,14 +262,38 @@ func evalStringInfixExpression(
 	operator string,
 	left, right object.Object,
 ) object.Object {
-	if operator != "+" {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+
+	switch operator {
+	case token.PLUS:
+		return &object.String{Value: leftVal + rightVal}
+
+	case token.MINUS:
+		return &object.String{Value: strings.ReplaceAll(leftVal, rightVal, "")}
+
+	case token.EQ:
+		return nativeBoolToBooleanObject(leftVal == rightVal)
+
+	case token.NOT_EQ:
+		return nativeBoolToBooleanObject(leftVal != rightVal)
+
+	case token.LT:
+		return nativeBoolToBooleanObject(leftVal < rightVal)
+
+	case token.GT:
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+
+	case token.LTE:
+		return nativeBoolToBooleanObject(leftVal <= rightVal)
+
+	case token.GTE:
+		return nativeBoolToBooleanObject(leftVal >= rightVal)
+
+	default:
 		return newError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
-
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
-	return &object.String{Value: leftVal + rightVal}
 }
 
 func evalIfExpression(

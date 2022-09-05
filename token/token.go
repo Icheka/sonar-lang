@@ -21,8 +21,10 @@ const (
 	POST_INCR = "++"
 	POST_DECR = "--"
 
-	LT = "<"
-	GT = ">"
+	LT  = "<"
+	GT  = ">"
+	LTE = "<="
+	GTE = ">="
 
 	EQ     = "=="
 	NOT_EQ = "!="

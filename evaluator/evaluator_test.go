@@ -7,6 +7,23 @@ import (
 	"testing"
 )
 
+func TestEvalInfixExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"1 + 1", 2},
+		{"1 - 1", 0},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		if !(testIntegerObject(t, evaluated, tt.expected) || testStringObject(t, evaluated, tt.expected)) {
+			t.Fatalf("Unknown type, got %q, expected %q", evaluated.Type(), tt.expected)
+		}
+	}
+}
+
 func TestEvalPostfixExpression(t *testing.T) {
 	tests := []struct {
 		input    string
