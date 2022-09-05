@@ -582,6 +582,39 @@ func TestHashIndexExpressions(t *testing.T) {
 		}
 	}
 }
+
+func TestStringIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`"Icheka"[0]`, "I"},
+		{`""[0]`, nil},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		if _, ok := tt.expected.(string); ok {
+			testStringObject(t, evaluated, tt.expected)
+			return
+		}
+		testNullObject(t, evaluated)
+	}
+}
+
+func testStringObject(t *testing.T, obj object.Object, expected interface{}) bool {
+	result, ok := obj.(*object.String)
+	if !ok {
+		t.Errorf("object is not String, got %T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value, got %s, expected %s", result.Value, expected)
+		return false
+	}
+	return true
+}
+
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)

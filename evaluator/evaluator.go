@@ -377,10 +377,32 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	switch {
 	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
 		return evalArrayIndexExpression(left, index)
+	case left.Type() == object.STRING_OBJ && index.Type() == object.INTEGER_OBJ:
+		return evalStringindexExpression(left, index)
 	case left.Type() == object.HASH_OBJ:
 		return evalHashIndexExpression(left, index)
 	default:
 		return newError("index operator not supported: %s", left.Type())
+	}
+}
+
+func evalStringindexExpression(str, index object.Object) object.Object {
+	/*
+		- cast to *object.String
+		- get literal of index
+		- test index literal is within bounds such that 0 <= index <= len(str)
+		- return value at index
+	*/
+	strObject := str.(*object.String)
+	idx := index.(*object.Integer).Value
+	max := int64(len(strObject.Value))
+
+	if max == 0 || idx < 0 || idx > max {
+		return NULL
+	}
+
+	return &object.String{
+		Value: string(strObject.Value[idx]),
 	}
 }
 
