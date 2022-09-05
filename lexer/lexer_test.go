@@ -32,6 +32,8 @@ if (5 < 10) {
 {"foo": "bar"}
 ++
 --
+<=
+>=
 |
 `
 
@@ -127,6 +129,8 @@ if (5 < 10) {
 		{token.RBRACE, "}"},
 		{token.POST_INCR, "++"},
 		{token.POST_DECR, "--"},
+		{token.LTE, "<="},
+		{token.GTE, ">="},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}
