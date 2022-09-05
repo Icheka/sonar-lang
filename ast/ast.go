@@ -191,6 +191,24 @@ func (oe *InfixExpression) String() string {
 	return out.String()
 }
 
+type PostfixExpression struct {
+	Token    token.Token
+	Operator string
+}
+
+func (oe *PostfixExpression) expressionNode()      {}
+func (oe *PostfixExpression) TokenLiteral() string { return oe.Token.Literal }
+func (oe *PostfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(oe.Token.Literal)
+	out.WriteString(oe.Operator)
+	out.WriteString(")")
+
+	return out.String()
+}
+
 type IfExpression struct {
 	Token       token.Token // The 'if' token
 	Condition   Expression

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sonar/v2/ast"
 	"sonar/v2/object"
+	"sonar/v2/token"
+	"strconv"
 )
 
 var (
@@ -68,6 +70,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return evalInfixExpression(node.Operator, left, right)
+
+	case *ast.PostfixExpression:
+		return evalPostfixExpression(env, node)
 
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
@@ -461,4 +466,33 @@ func evalHashIndexExpression(hash, index object.Object) object.Object {
 	}
 
 	return pair.Value
+}
+
+func evalPostfixExpression(env *object.Environment, node *ast.PostfixExpression) object.Object {
+	/*
+		- get token from env
+		- if no token, check if token is int literal
+		- if token is integer, set incremented value in env
+	*/
+	tokenLiteral := node.Token.Literal
+	tok, ok := env.Get(tokenLiteral)
+	if !ok {
+		if intValue, ok := strconv.ParseInt(tokenLiteral, 10, 64); ok == nil {
+			tok = &object.Integer{Value: intValue}
+		} else {
+			return newError("Unknown token %s", tokenLiteral)
+		}
+	}
+
+	switch node.Operator {
+	case token.POST_INCR:
+		v, ok := tok.(*object.Integer)
+		if !ok {
+			return newError("Left side of post-increment operator must be of type int, got %s", tokenLiteral)
+		}
+		newV := &object.Integer{Value: v.Value + 1}
+		env.Set(tokenLiteral, newV)
+		return newV
+	}
+	return newError("Unknown operator %s", node.Operator)
 }
