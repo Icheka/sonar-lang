@@ -12,22 +12,22 @@ const (
 	STRING = "STRING" // "foobar"
 
 	// Operators
-	ASSIGN    = "="
-	PLUS      = "+"
-	MINUS     = "-"
-	BANG      = "!"
-	ASTERISK  = "*"
-	SLASH     = "/"
-	POST_INCR = "++"
-	POST_DECR = "--"
+	ASSIGN   = "="
+	PLUS     = "+"
+	MINUS    = "-"
+	BANG     = "!"
+	ASTERISK = "*"
+	SLASH    = "/"
 
 	LT  = "<"
 	GT  = ">"
 	LTE = "<="
 	GTE = ">="
 
-	EQ     = "=="
-	NOT_EQ = "!="
+	EQ        = "=="
+	NOT_EQ    = "!="
+	POST_INCR = "++"
+	POST_DECR = "--"
 
 	// Delimiters
 	COMMA     = ","

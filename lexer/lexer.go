@@ -1,6 +1,8 @@
 package lexer
 
-import "sonar/v2/token"
+import (
+	"sonar/v2/token"
+)
 
 type Lexer struct {
 	input        string
@@ -19,6 +21,11 @@ func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
 	l.skipWhitespace()
+
+	if string(l.ch) == token.SLASH && string(l.peekChar()) == token.SLASH {
+		l.skipSingleLineComment()
+		return l.NextToken()
+	}
 
 	switch l.ch {
 	case '=':
@@ -113,6 +120,13 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.readChar()
 	return tok
+}
+
+func (l *Lexer) skipSingleLineComment() {
+	for l.ch != '\n' && l.ch != '0' {
+		l.readChar()
+	}
+	l.skipWhitespace()
 }
 
 func (l *Lexer) skipWhitespace() {
