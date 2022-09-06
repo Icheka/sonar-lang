@@ -267,7 +267,7 @@ func evalIntegerInfixExpression(
 	case token.ASTERISK:
 		return &object.Integer{Value: leftVal * rightVal}
 	case token.SLASH:
-		return &object.Integer{Value: leftVal / rightVal}
+		return evalNumberDivision(leftVal, rightVal)
 	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case token.GT:
@@ -301,7 +301,7 @@ func evalFloatInfixExpression(
 	case token.ASTERISK:
 		return &object.Float{Value: leftVal * rightVal}
 	case token.SLASH:
-		return &object.Float{Value: leftVal / rightVal}
+		return evalNumberDivision(leftVal, rightVal)
 	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case token.GT:
@@ -318,6 +318,14 @@ func evalFloatInfixExpression(
 		return newError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
+}
+
+func evalNumberDivision[T int64 | float64](leftVal, rightVal T) object.Object {
+	result := float64(leftVal) / float64(rightVal)
+	if strings.Contains(fmt.Sprintf("%f", result), ".") {
+		return &object.Float{Value: result}
+	}
+	return &object.Integer{Value: int64(result)}
 }
 
 func evalStringInfixExpression(
