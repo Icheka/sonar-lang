@@ -203,12 +203,6 @@ func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func newToken(tokenType token.TokenType, ch interface{}) token.Token {
-	if str, ok := ch.(string); ok {
-		return token.Token{Type: tokenType, Literal: str}
-	}
-	if b, ok := ch.(byte); ok {
-		return token.Token{Type: tokenType, Literal: string(b)}
-	}
-	panic("type of newToken[ch] expected to be string or byte")
+func newToken[T byte | string](tokenType token.TokenType, ch T) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }
