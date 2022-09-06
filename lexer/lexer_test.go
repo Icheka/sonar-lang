@@ -34,6 +34,8 @@ if (5 < 10) {
 --
 <=
 >=
+1.2
+1.2.3
 |
 `
 
@@ -131,6 +133,8 @@ if (5 < 10) {
 		{token.POST_DECR, "--"},
 		{token.LTE, "<="},
 		{token.GTE, ">="},
+		{token.FLOAT, "1.2"},
+		{token.ILLEGAL, "1.2.3"},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}

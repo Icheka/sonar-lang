@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"sonar/v2/token"
+	"strings"
 )
 
 type Lexer struct {
@@ -110,9 +111,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else if isDigit(l.ch) {
-			tok.Type = token.INT
-			tok.Literal = l.readNumber()
-			return tok
+			return l.readNumber()
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
@@ -161,12 +160,28 @@ func (l *Lexer) readIdentifier() string {
 	return l.input[position:l.position]
 }
 
-func (l *Lexer) readNumber() string {
+func (l *Lexer) readNumber() token.Token {
 	position := l.position
-	for isDigit(l.ch) {
+
+	for isDigit(l.ch) || l.ch == '.' {
 		l.readChar()
 	}
-	return l.input[position:l.position]
+	text := l.input[position:l.position]
+	dotCount := strings.Count(text, ".")
+	tok := &token.Token{}
+
+	if dotCount > 1 {
+		return newToken(token.ILLEGAL, text)
+	}
+
+	switch dotCount {
+	case 0:
+		tok.Type = token.INT
+	case 1:
+		tok.Type = token.FLOAT
+	}
+	tok.Literal = text
+	return *tok
 }
 
 func (l *Lexer) readString() string {
