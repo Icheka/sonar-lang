@@ -30,6 +30,9 @@ const (
 	POST_INCR = "++"
 	POST_DECR = "--"
 
+	AND = "and"
+	OR  = "or"
+
 	// Delimiters
 	COMMA     = ","
 	SEMICOLON = ";"
@@ -66,6 +69,8 @@ var keywords = map[string]TokenType{
 	"if":     IF,
 	"else":   ELSE,
 	"return": RETURN,
+	"and":    AND,
+	"or":     OR,
 }
 
 func LookupIdent(ident string) TokenType {

@@ -36,6 +36,8 @@ if (5 < 10) {
 >=
 1.2
 1.2.3
+and
+or
 |
 `
 
@@ -135,6 +137,8 @@ if (5 < 10) {
 		{token.GTE, ">="},
 		{token.FLOAT, "1.2"},
 		{token.ILLEGAL, "1.2.3"},
+		{token.AND, "and"},
+		{token.OR, "or"},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}

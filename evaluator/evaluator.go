@@ -187,6 +187,17 @@ func evalInfixExpression(
 	operator string,
 	left, right object.Object,
 ) object.Object {
+	switch operator {
+	case token.AND:
+		l := isTruthy(left)
+		r := isTruthy(right)
+		return nativeBoolToBooleanObject(l && r)
+	case token.OR:
+		l := isTruthy(left)
+		r := isTruthy(right)
+		return nativeBoolToBooleanObject(l || r)
+	}
+
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
@@ -209,10 +220,10 @@ func evalInfixExpression(
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
 
-	case operator == "==":
+	case operator == token.EQ:
 		return nativeBoolToBooleanObject(left == right)
 
-	case operator == "!=":
+	case operator == token.NOT_EQ:
 		return nativeBoolToBooleanObject(left != right)
 
 	case left.Type() != right.Type():
