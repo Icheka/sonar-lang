@@ -38,6 +38,7 @@ if (5 < 10) {
 1.2.3
 and
 or
+while
 |
 `
 
@@ -139,6 +140,7 @@ or
 		{token.ILLEGAL, "1.2.3"},
 		{token.AND, "and"},
 		{token.OR, "or"},
+		{token.WHILE, "while"},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}

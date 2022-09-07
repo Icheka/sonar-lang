@@ -7,6 +7,18 @@ import (
 	"testing"
 )
 
+func TestWhileStatement(t *testing.T) {
+	input := `
+let i = 0
+while (i < 3) {
+	i++
+}
+i
+`
+	// test that i is a variable with value = 2
+	testIntegerObject(t, testEval(input), 3)
+}
+
 func TestEvalInfixExpression(t *testing.T) {
 	tests := []struct {
 		input    string

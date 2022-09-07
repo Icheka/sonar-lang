@@ -42,6 +42,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		env.Set(node.Name.Value, val)
 
+	case *ast.WhileStatement:
+		return evalWhileStatement(node, env)
+
 	// Expressions
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
@@ -159,6 +162,32 @@ func evalBlockStatement(
 			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
 				return result
 			}
+		}
+	}
+
+	return result
+}
+
+func evalWhileStatement(ws *ast.WhileStatement, env *object.Environment) object.Object {
+	// evaluate condition
+	// -- if condition throws error, return error
+	// -- if condition is not true, break loop
+	// -- evaluate consequence
+
+	var result object.Object
+
+	for {
+		condition := Eval(ws.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+		if !isTruthy(condition) {
+			break
+		}
+		result := Eval(ws.Consequence, env)
+		// if there is a return statement, return immediately
+		if !isError(result) && result.Type() == object.RETURN_VALUE_OBJ {
+			return result
 		}
 	}
 
