@@ -192,6 +192,10 @@ func evalInfixExpression(
 		l := isTruthy(left)
 		r := isTruthy(right)
 		return nativeBoolToBooleanObject(l && r)
+	case token.OR:
+		l := isTruthy(left)
+		r := isTruthy(right)
+		return nativeBoolToBooleanObject(l || r)
 	}
 
 	switch {
