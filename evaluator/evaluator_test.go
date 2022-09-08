@@ -7,6 +7,15 @@ import (
 	"testing"
 )
 
+func TestAssignmentExpression(t *testing.T) {
+	input := `
+let a = 1
+a = 2
+`
+
+	testIntegerObject(t, testEval(input), 2)
+}
+
 func TestWhileStatement(t *testing.T) {
 	input := `
 let i = 0

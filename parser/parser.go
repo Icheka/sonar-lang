@@ -12,6 +12,7 @@ const (
 	_ int = iota
 	LOWEST
 	CONNECTIVE  // and/or
+	ASSIGN      // =, +=, -=, *=, /=
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
@@ -22,6 +23,7 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
+	token.ASSIGN:   ASSIGN,
 	token.EQ:       EQUALS,
 	token.NOT_EQ:   EQUALS,
 	token.LT:       LESSGREATER,
@@ -91,6 +93,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GTE, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.OR, p.parseInfixExpression)
+
+	p.registerInfix(token.ASSIGN, p.parseAssignmentExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
@@ -560,4 +564,22 @@ func (p *Parser) parseWhileStatement() ast.Statement {
 	stmt.Consequence = p.parseBlockStatement()
 
 	return stmt
+}
+
+func (p *Parser) parseAssignmentExpression(left ast.Expression) ast.Expression {
+	exp := &ast.AssignmentExpression{Token: p.curToken}
+	identifier, ok := left.(*ast.Identifier)
+	if !ok {
+		p.errors = append(p.errors, "Expected identifier in assignment expression, got %s", left.TokenLiteral())
+	}
+	exp.Identifier = identifier
+
+	switch p.curToken.Type {
+	case token.ASSIGN:
+		exp.Operator = token.ASSIGN
+	}
+
+	p.nextToken() // advance to right side of assignment expression
+	exp.Value = p.parseExpression(LOWEST)
+	return exp
 }
