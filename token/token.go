@@ -13,12 +13,17 @@ const (
 	STRING = "STRING" // "foobar"
 
 	// Operators
-	ASSIGN   = "="
 	PLUS     = "+"
 	MINUS    = "-"
 	BANG     = "!"
 	ASTERISK = "*"
 	SLASH    = "/"
+
+	ASSIGN          = "="
+	PLUS_ASSIGN     = "+="
+	MINUS_ASSIGN    = "-="
+	ASTERISK_ASSIGN = "*="
+	SLASH_ASSIGN    = "/="
 
 	LT  = "<"
 	GT  = ">"

@@ -123,6 +123,27 @@ func (bs *BlockStatement) String() string {
 	return out.String()
 }
 
+type WhileStatement struct {
+	Token       token.Token // the 'while' token
+	Condition   Expression
+	Consequence *BlockStatement
+}
+
+func (ws *WhileStatement) statementNode()       {}
+func (ws *WhileStatement) TokenLiteral() string { return ws.Token.Literal }
+func (ws *WhileStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ws.TokenLiteral())
+	out.WriteString(" (")
+	out.WriteString(ws.Condition.String())
+	out.WriteString(" ) {")
+	out.WriteString(ws.Consequence.String())
+	out.WriteString("}")
+
+	return out.String()
+}
+
 // Expressions
 type Identifier struct {
 	Token token.Token // the token.IDENT token
@@ -365,23 +386,21 @@ func (hl *HashLiteral) String() string {
 	return out.String()
 }
 
-type WhileStatement struct {
-	Token       token.Token // the 'while' token
-	Condition   Expression
-	Consequence *BlockStatement
+type AssignmentExpression struct {
+	Token      token.Token // the identifier token
+	Identifier *Identifier
+	Value      Expression
+	Operator   string
 }
 
-func (ws *WhileStatement) statementNode()       {}
-func (ws *WhileStatement) TokenLiteral() string { return ws.Token.Literal }
-func (ws *WhileStatement) String() string {
-	var out bytes.Buffer
+func (as *AssignmentExpression) expressionNode()      {}
+func (as *AssignmentExpression) TokenLiteral() string { return as.Token.Literal }
+func (as *AssignmentExpression) String() string {
+	var out *bytes.Buffer
 
-	out.WriteString(ws.TokenLiteral())
-	out.WriteString(" (")
-	out.WriteString(ws.Condition.String())
-	out.WriteString(" ) {")
-	out.WriteString(ws.Consequence.String())
-	out.WriteString("}")
+	out.WriteString(as.Identifier.String())
+	out.WriteString(" " + as.Operator + " ")
+	out.WriteString(as.Value.String())
 
 	return out.String()
 }

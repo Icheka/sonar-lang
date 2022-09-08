@@ -7,6 +7,39 @@ import (
 	"testing"
 )
 
+func TestAssignmentExpressions(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		expectedOperator   string
+		expectedValue      interface{}
+	}{
+		{"x = 1", "x", "=", 1},
+		{"y = a", "y", "=", "a"},
+		{"y += a", "y", "+=", "a"},
+		{"y -= a", "y", "-=", "a"},
+		{"y *= a", "y", "*=", "a"},
+		{"y /= a", "y", "/=", "a"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statements. got=%d",
+				len(program.Statements))
+		}
+
+		exp := program.Statements[0].(*ast.ExpressionStatement)
+		if !testAssignStatement(t, exp.Expression, tt.expectedIdentifier, tt.expectedOperator, tt.expectedValue) {
+			return
+		}
+	}
+}
+
 func TestWhileStatement(t *testing.T) {
 	input := `while (x < y) { x }`
 
@@ -844,6 +877,10 @@ func TestParsingArrayLiterals(t *testing.T) {
 	checkParserErrors(t, p)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
 	array, ok := stmt.Expression.(*ast.ArrayLiteral)
 	if !ok {
 		t.Fatalf("exp not ast.ArrayLiteral. got=%T", stmt.Expression)
@@ -1198,4 +1235,24 @@ func checkParserErrors(t *testing.T, p *Parser) {
 		t.Errorf("parser error: %q", msg)
 	}
 	t.FailNow()
+}
+
+func testAssignStatement(t *testing.T, exp ast.Expression, name string, operator string, value interface{}) bool {
+	assign, ok := exp.(*ast.AssignmentExpression)
+	if !ok {
+		t.Errorf("exp not *ast.AssignmentExpression. got=%T", exp)
+		return false
+	}
+
+	if assign.Identifier.Value != name || assign.Identifier.TokenLiteral() != name {
+		t.Errorf("assign.Identifier.Value not '%s'. got=%s", name, assign.Identifier.Value)
+		return false
+	}
+
+	if assign.Operator != operator {
+		t.Errorf("assign.Operator not '%s'. got=%s", operator, assign.Operator)
+		return false
+	}
+
+	return testLiteralExpression(t, assign.Value, value)
 }

@@ -1,11 +1,53 @@
 package evaluator
 
 import (
+	"fmt"
 	"sonar/v2/lexer"
 	"sonar/v2/object"
 	"sonar/v2/parser"
 	"testing"
 )
+
+func TestAssignmentExpression(t *testing.T) {
+	input := `
+let a = 1
+a = 2
+`
+
+	testIntegerObject(t, testEval(input), 2)
+
+	// test that attempting to assign to a variable before it is declared throws error
+	errorTest := "a = 2"
+	evaluated := testEval(errorTest)
+	if _, isErr := evaluated.(*object.Error); !isErr {
+		t.Fatalf("expected evaluated to be error, got=%T", evaluated)
+	}
+
+	// test double-operator assignments
+	tests := []struct {
+		input         string
+		expectedValue interface{}
+	}{
+		{"a += 1", 1},
+		{"a -= 1", -1},
+		{"a *= 2", 0},
+		{"a /= 1", 0.0},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(fmt.Sprintf("let a = 0; %s", tt.input))
+		switch v := tt.expectedValue.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(v))
+		case int64:
+			testIntegerObject(t, evaluated, v)
+		case float64:
+			testFloatObject(t, evaluated, v)
+		case string:
+			testStringObject(t, evaluated, v)
+		}
+	}
+}
 
 func TestWhileStatement(t *testing.T) {
 	input := `
@@ -328,6 +370,13 @@ func TestLetStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+
+	// test that calling let again on a variable in a scope will throw error
+	errorTest := "let a = 1; let a = 2;"
+	evaluated := testEval(errorTest)
+	if _, isErr := evaluated.(*object.Error); !isErr {
+		t.Fatalf("expected evaluated to be error, got=%T", evaluated)
 	}
 }
 
