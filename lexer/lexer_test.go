@@ -39,6 +39,10 @@ if (5 < 10) {
 and
 or
 while
++=
+-=
+*=
+/=
 |
 `
 
@@ -141,6 +145,10 @@ while
 		{token.AND, "and"},
 		{token.OR, "or"},
 		{token.WHILE, "while"},
+		{token.PLUS_ASSIGN, "+="},
+		{token.MINUS_ASSIGN, "-="},
+		{token.ASTERISK_ASSIGN, "*="},
+		{token.SLASH_ASSIGN, "/="},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}

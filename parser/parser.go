@@ -23,19 +23,26 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
-	token.ASSIGN:   ASSIGN,
-	token.EQ:       EQUALS,
-	token.NOT_EQ:   EQUALS,
-	token.LT:       LESSGREATER,
-	token.GT:       LESSGREATER,
-	token.LTE:      LESSGREATER,
-	token.GTE:      LESSGREATER,
-	token.AND:      CONNECTIVE,
-	token.OR:       CONNECTIVE,
-	token.PLUS:     SUM,
-	token.MINUS:    SUM,
-	token.SLASH:    PRODUCT,
-	token.ASTERISK: PRODUCT,
+	token.ASSIGN: ASSIGN,
+	token.EQ:     EQUALS,
+	token.NOT_EQ: EQUALS,
+	token.LT:     LESSGREATER,
+	token.GT:     LESSGREATER,
+	token.LTE:    LESSGREATER,
+	token.GTE:    LESSGREATER,
+	token.AND:    CONNECTIVE,
+	token.OR:     CONNECTIVE,
+
+	token.PLUS:         SUM,
+	token.MINUS:        SUM,
+	token.PLUS_ASSIGN:  SUM,
+	token.MINUS_ASSIGN: SUM,
+
+	token.SLASH:           PRODUCT,
+	token.ASTERISK:        PRODUCT,
+	token.ASTERISK_ASSIGN: PRODUCT,
+	token.SLASH_ASSIGN:    PRODUCT,
+
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
 }
@@ -95,6 +102,10 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.OR, p.parseInfixExpression)
 
 	p.registerInfix(token.ASSIGN, p.parseAssignmentExpression)
+	p.registerInfix(token.PLUS_ASSIGN, p.parseAssignmentExpression)
+	p.registerInfix(token.MINUS_ASSIGN, p.parseAssignmentExpression)
+	p.registerInfix(token.ASTERISK_ASSIGN, p.parseAssignmentExpression)
+	p.registerInfix(token.SLASH_ASSIGN, p.parseAssignmentExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
@@ -572,12 +583,9 @@ func (p *Parser) parseAssignmentExpression(left ast.Expression) ast.Expression {
 	if !ok {
 		p.errors = append(p.errors, "Expected identifier in assignment expression, got %s", left.TokenLiteral())
 	}
-	exp.Identifier = identifier
 
-	switch p.curToken.Type {
-	case token.ASSIGN:
-		exp.Operator = token.ASSIGN
-	}
+	exp.Identifier = identifier
+	exp.Operator = string(p.curToken.Type)
 
 	p.nextToken() // advance to right side of assignment expression
 	exp.Value = p.parseExpression(LOWEST)

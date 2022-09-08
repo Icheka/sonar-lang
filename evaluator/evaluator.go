@@ -40,6 +40,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
+		if _, ok := env.Get(node.Name.Value); ok {
+			return &object.Error{
+				Message: fmt.Sprintf("SyntaxError: Identifier '%s' has already been declared", node.Name.Value),
+			}
+		}
 		env.Set(node.Name.Value, val)
 
 	case *ast.AssignmentExpression:
@@ -47,8 +52,33 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(right) {
 			return right
 		}
-		env.Set(node.Identifier.Value, right)
-		return right
+		oldValue, ok := env.Get(node.Identifier.Value)
+		if !ok {
+			return &object.Error{
+				Message: fmt.Sprintf("SyntaxError: Assignment to undefined identifier '%s'", node.Identifier.Value),
+			}
+		}
+
+		result := right
+
+		if node.Operator != token.ASSIGN {
+			operators := map[token.TokenType]token.TokenType{
+				(token.PLUS_ASSIGN):     token.PLUS,
+				(token.MINUS_ASSIGN):    token.MINUS,
+				(token.ASTERISK_ASSIGN): token.ASTERISK,
+				(token.SLASH_ASSIGN):    token.SLASH,
+			}
+
+			// re-use evalInfixExpression...
+			// ... for example, if node.Operator is token.PLUS_ASSIGN, this will evaluate oldValue + right and return to result
+			result = evalInfixExpression(string(operators[token.TokenType(node.Operator)]), oldValue, right)
+
+			// catch errors from evalInfixhere
+			if isError(result) {
+				return result
+			}
+		}
+		return env.Set(node.Identifier.Value, result)
 
 	case *ast.WhileStatement:
 		return evalWhileStatement(node, env)

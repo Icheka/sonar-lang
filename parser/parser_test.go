@@ -16,6 +16,10 @@ func TestAssignmentExpressions(t *testing.T) {
 	}{
 		{"x = 1", "x", "=", 1},
 		{"y = a", "y", "=", "a"},
+		{"y += a", "y", "+=", "a"},
+		{"y -= a", "y", "-=", "a"},
+		{"y *= a", "y", "*=", "a"},
+		{"y /= a", "y", "/=", "a"},
 	}
 
 	for _, tt := range tests {

@@ -39,17 +39,25 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
 	case '+':
-		if l.peekChar() == '+' {
+		switch l.peekChar() {
+		case '+':
 			l.readChar()
 			tok = newToken(token.POST_INCR, token.POST_INCR)
-		} else {
+		case '=':
+			l.readChar()
+			tok = newToken(token.PLUS_ASSIGN, token.PLUS_ASSIGN)
+		default:
 			tok = newToken(token.PLUS, l.ch)
 		}
 	case '-':
-		if l.peekChar() == '-' {
+		switch l.peekChar() {
+		case '=':
+			l.readChar()
+			tok = newToken(token.MINUS_ASSIGN, token.MINUS_ASSIGN)
+		case '-':
 			l.readChar()
 			tok = newToken(token.POST_DECR, token.POST_DECR)
-		} else {
+		default:
 			tok = newToken(token.MINUS, l.ch)
 		}
 	case '!':
@@ -62,9 +70,21 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.BANG, l.ch)
 		}
 	case '/':
-		tok = newToken(token.SLASH, l.ch)
+		switch l.peekChar() {
+		case '=':
+			l.readChar()
+			tok = newToken(token.SLASH_ASSIGN, token.SLASH_ASSIGN)
+		default:
+			tok = newToken(token.SLASH, l.ch)
+		}
 	case '*':
-		tok = newToken(token.ASTERISK, l.ch)
+		switch l.peekChar() {
+		case '=':
+			l.readChar()
+			tok = newToken(token.ASTERISK_ASSIGN, token.ASTERISK_ASSIGN)
+		default:
+			tok = newToken(token.ASTERISK, l.ch)
+		}
 	case '<':
 		if l.peekChar() == '=' {
 			ch := l.ch
@@ -154,7 +174,7 @@ func (l *Lexer) peekChar() byte {
 
 func (l *Lexer) readIdentifier() string {
 	position := l.position
-	for isLetter(l.ch) {
+	for isLetter(l.ch) || (isDigit(l.ch) && isLetter(l.input[l.position-1])) {
 		l.readChar()
 	}
 	return l.input[position:l.position]
