@@ -11,6 +11,7 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	CONNECTIVE  // and/or
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
@@ -27,8 +28,8 @@ var precedences = map[token.TokenType]int{
 	token.GT:       LESSGREATER,
 	token.LTE:      LESSGREATER,
 	token.GTE:      LESSGREATER,
-	token.AND:      LESSGREATER,
-	token.OR:       LESSGREATER,
+	token.AND:      CONNECTIVE,
+	token.OR:       CONNECTIVE,
 	token.PLUS:     SUM,
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
@@ -165,6 +166,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLetStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.WHILE:
+		return p.parseWhileStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -534,4 +537,27 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 
 func (p *Parser) registerPostfix(tokenType token.TokenType, fn postfixParseFn) {
 	p.postfixParseFns[tokenType] = fn
+}
+
+func (p *Parser) parseWhileStatement() ast.Statement {
+	stmt := &ast.WhileStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken() // advance to token after'('
+
+	stmt.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	stmt.Consequence = p.parseBlockStatement()
+
+	return stmt
 }

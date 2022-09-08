@@ -28,6 +28,8 @@ const (
 
 	ARRAY_OBJ = "ARRAY"
 	HASH_OBJ  = "HASH"
+
+	WHILE_OBJ = "WHILE"
 )
 
 type HashKey struct {

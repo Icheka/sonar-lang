@@ -364,3 +364,24 @@ func (hl *HashLiteral) String() string {
 
 	return out.String()
 }
+
+type WhileStatement struct {
+	Token       token.Token // the 'while' token
+	Condition   Expression
+	Consequence *BlockStatement
+}
+
+func (ws *WhileStatement) statementNode()       {}
+func (ws *WhileStatement) TokenLiteral() string { return ws.Token.Literal }
+func (ws *WhileStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ws.TokenLiteral())
+	out.WriteString(" (")
+	out.WriteString(ws.Condition.String())
+	out.WriteString(" ) {")
+	out.WriteString(ws.Consequence.String())
+	out.WriteString("}")
+
+	return out.String()
+}
