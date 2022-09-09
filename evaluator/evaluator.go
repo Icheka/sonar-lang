@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"reflect"
 	"sonar/v2/ast"
 	"sonar/v2/object"
 	"sonar/v2/token"
@@ -272,7 +273,7 @@ func evalInfixExpression(
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
 		return evalFloatInfixExpression(operator, left, right)
 
-		// if types are mismatched, cast the integer type to float
+	// if types are mismatched, cast the integer type to float
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		right = &object.Float{
 			Value: float64(right.(*object.Integer).Value),
@@ -330,6 +331,21 @@ func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	return &object.Float{Value: -value}
 }
 
+func evalZeroDivision[T int64 | float64](left T) object.Object {
+	var msg string
+
+	switch reflect.TypeOf(left).String() {
+	case "int":
+		fallthrough
+	case "int64":
+		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%d/0)", int64(left))
+	default:
+		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%s/0)", fmt.Sprint(left))
+	}
+
+	return &object.Error{Message: msg}
+}
+
 func evalIntegerInfixExpression(
 	operator string,
 	left, right object.Object,
@@ -345,6 +361,9 @@ func evalIntegerInfixExpression(
 	case token.ASTERISK:
 		return &object.Integer{Value: leftVal * rightVal}
 	case token.SLASH:
+		if rightVal == 0 {
+			return evalZeroDivision(leftVal)
+		}
 		return evalNumberDivision(leftVal, rightVal)
 	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
@@ -379,6 +398,9 @@ func evalFloatInfixExpression(
 	case token.ASTERISK:
 		return &object.Float{Value: leftVal * rightVal}
 	case token.SLASH:
+		if rightVal == 0 {
+			return evalZeroDivision(leftVal)
+		}
 		return evalNumberDivision(leftVal, rightVal)
 	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
@@ -399,6 +421,13 @@ func evalFloatInfixExpression(
 }
 
 func evalNumberDivision[T int64 | float64](leftVal, rightVal T) object.Object {
+	// if left is 0 and right is negative,
+	// convert right to positive
+	// this will ensure that operations like 0/-1 will return 0, not -0
+	if leftVal == 0 && rightVal < 0 {
+		rightVal = rightVal * -1
+	}
+
 	result := float64(leftVal) / float64(rightVal)
 	if strings.Contains(fmt.Sprintf("%f", result), ".") {
 		return &object.Float{Value: result}
