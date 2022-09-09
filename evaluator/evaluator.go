@@ -340,7 +340,7 @@ func evalZeroDivision[T int64 | float64](left T) object.Object {
 	case "int64":
 		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%d/0)", int64(left))
 	default:
-		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%d/0)", int64(left))
+		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%s/0)", fmt.Sprint(left))
 	}
 
 	return &object.Error{Message: msg}
