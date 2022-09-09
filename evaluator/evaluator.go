@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"reflect"
 	"sonar/v2/ast"
 	"sonar/v2/object"
 	"sonar/v2/token"
@@ -330,6 +331,21 @@ func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	return &object.Float{Value: -value}
 }
 
+func evalZeroDivision[T int64 | float64](left T) object.Object {
+	var msg string
+
+	switch reflect.TypeOf(left).String() {
+	case "int":
+		fallthrough
+	case "int64":
+		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%d/0)", int64(left))
+	default:
+		msg = fmt.Sprintf("ZeroDivisionError: division by zero (%d/0)", int64(left))
+	}
+
+	return &object.Error{Message: msg}
+}
+
 func evalIntegerInfixExpression(
 	operator string,
 	left, right object.Object,
@@ -345,6 +361,9 @@ func evalIntegerInfixExpression(
 	case token.ASTERISK:
 		return &object.Integer{Value: leftVal * rightVal}
 	case token.SLASH:
+		if rightVal == 0 {
+			return evalZeroDivision(leftVal)
+		}
 		return evalNumberDivision(leftVal, rightVal)
 	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
@@ -379,6 +398,9 @@ func evalFloatInfixExpression(
 	case token.ASTERISK:
 		return &object.Float{Value: leftVal * rightVal}
 	case token.SLASH:
+		if rightVal == 0 {
+			return evalZeroDivision(leftVal)
+		}
 		return evalNumberDivision(leftVal, rightVal)
 	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
