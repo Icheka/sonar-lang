@@ -272,7 +272,7 @@ func evalInfixExpression(
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
 		return evalFloatInfixExpression(operator, left, right)
 
-		// if types are mismatched, cast the integer type to float
+	// if types are mismatched, cast the integer type to float
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		right = &object.Float{
 			Value: float64(right.(*object.Integer).Value),
@@ -399,6 +399,13 @@ func evalFloatInfixExpression(
 }
 
 func evalNumberDivision[T int64 | float64](leftVal, rightVal T) object.Object {
+	// if left is 0 and right is negative,
+	// convert right to positive
+	// this will ensure that operations like 0/-1 will return 0, not -0
+	if leftVal == 0 && rightVal < 0 {
+		rightVal = rightVal * -1
+	}
+
 	result := float64(leftVal) / float64(rightVal)
 	if strings.Contains(fmt.Sprintf("%f", result), ".") {
 		return &object.Float{Value: result}
