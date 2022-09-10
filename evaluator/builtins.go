@@ -23,7 +23,7 @@ var builtins = map[string]*object.Builtin{
 		}
 	},
 	},
-	"print": &object.Builtin{
+	"print": {
 		Fn: func(args ...object.Object) object.Object {
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
@@ -34,6 +34,17 @@ var builtins = map[string]*object.Builtin{
 	},
 	"slice": {
 		Fn: func(args ...object.Object) object.Object {
+			/*
+				slice(arr)
+				-- returns a copy of arr
+				slice(arr, n)
+				-- returns a copy of arr[n:]
+				slice(arr, n, m)
+				-- returns a copy of arr[n:m]
+				slice(arr, n, m, y)
+				-- returns a copy of arr[n:m:y]
+				-- indices wrap around len(arr) when negative
+			*/
 			if len(args) == 0 {
 				return NewError("`slice` requires at least 1 argument")
 			}
@@ -45,52 +56,48 @@ var builtins = map[string]*object.Builtin{
 			if len(args) > 4 {
 				return NewError("`slice` requires at most 4 arguments, %d given", len(args))
 			}
-			for i, arg := range args[1:] {
-				if arg.Type() != object.INTEGER_OBJ {
-					return NewError("ordinal argument to `slice` at index %d must be INTEGER, %s given", i, arg.Type())
-				}
-			}
-			start := 0
-			if len(args) > 1 {
-				start = int(args[1].(*object.Integer).Value)
-			}
-			end := 0
-			if len(args) > 2 {
-				end = int(args[2].(*object.Integer).Value)
-			}
-			step := 0
-			if len(args) > 3 {
-				step = int(args[3].(*object.Integer).Value)
-			}
 
 			switch obj.Type() {
 			case object.ARRAY_OBJ:
-				elements := obj.(*object.Array).Elements
-				newArr := []object.Object{}
+				if len(args) == 1 {
+					return &object.Array{Elements: obj.(*object.Array).Elements}
+				}
 
-				// similarly to Python
-				// allow expressions like slice(a, -1, ...)
+				for i, arg := range args[1:] {
+					if arg.Type() != object.INTEGER_OBJ {
+						return NewError("ordinal argument to `slice` at index %d must be INTEGER, %s given", i, arg.Type())
+					}
+				}
+				start := int(args[1].(*object.Integer).Value)
+				originalArray := obj.(*object.Array).Elements
 				if start < 0 {
-					// wrap start around length of array
-					start = len(elements) + start
+					start = len(originalArray) + start
 				}
-				// allow expressions like slice(a, 0, -1, ...)
+				if len(args) == 2 {
+					return &object.Array{Elements: originalArray[start:]}
+				}
+
+				end := int(args[2].(*object.Integer).Value)
 				if end < 0 {
-					// wrap start around length of array
-					end = len(elements) + end
-				} else if end == 0 {
-					end = len(elements)
+					end = len(originalArray) + end
 				}
-				if step == 0 {
-					newArr = elements[start:end]
+
+				newArray := []object.Object{}
+				if len(args) == 3 {
+					newArray = originalArray[start:end]
 				} else {
-					for i, element := range elements[start:end] {
-						if i%step == 0 {
-							newArr = append(newArr, element)
+					step := int(args[3].(*object.Integer).Value)
+					if step < 0 {
+						step = len(originalArray) + step
+					}
+					for k, v := range originalArray {
+						if k%step == 0 {
+							newArray = append(newArray, v)
 						}
 					}
 				}
-				return &object.Array{Elements: newArr}
+
+				return &object.Array{Elements: newArray}
 			default:
 				return &object.Array{Elements: []object.Object{}}
 			}

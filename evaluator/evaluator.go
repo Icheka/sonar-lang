@@ -437,8 +437,6 @@ func evalNumberDivision[T int64 | float64](leftVal, rightVal T) object.Object {
 	if !strings.Contains(resultStr, ".") {
 		return &object.Integer{Value: int64(result)}
 	}
-	fmt.Println(result, " >>> ", resultStr)
-	// if strings.Index(resultStr, ".") != (len(resultStr) - 1)
 	return &object.Float{Value: result}
 }
 
@@ -488,6 +486,7 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 		switch operator {
 		case token.PLUS:
 			return &object.Array{Elements: append(leftVal, rightVal...)}
+
 		default:
 			return NewError("unknown operator: %s %s %s",
 				left.Type(), operator, right.Type())
@@ -500,8 +499,12 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 		switch operator {
 		case token.SLASH:
 			newArr := utils.SliceChunk(leftVal, int(rightVal.Value))
-
 			return &object.Array{Elements: newArr[0]}
+
+		case token.MINUS:
+			newArr := append(leftVal[0:rightVal.Value], leftVal[rightVal.Value:]...)
+			return &object.Array{Elements: newArr}
+
 		default:
 			return NewError("unknown operator: %s %s %s",
 				left.Type(), operator, right.Type())

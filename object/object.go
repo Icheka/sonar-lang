@@ -150,7 +150,6 @@ func (b *Builtin) Inspect() string  { return "builtin function" }
 
 type Array struct {
 	Elements []Object
-	Array    *Array
 }
 
 func (ao *Array) Type() ObjectType { return ARRAY_OBJ }
