@@ -118,6 +118,23 @@ var ArrayBuiltins = map[string]*object.Builtin{
 			}
 		},
 	},
+	"contains": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return NewError("`contains` requires at 2 arguments, got=%d", len(args))
+			}
+			obj := args[0]
+			elm := args[1]
+
+			switch obj.Type() {
+			case object.ARRAY_OBJ:
+				return &object.Boolean{Value: arrayContains(obj.(*object.Array), elm)}
+			default:
+				return NewError("first argument to `contains` must be of type ARRAY or STRING, got %s",
+					args[0].Type())
+			}
+		},
+	},
 }
 
 func checkArity(args []object.Object, expected int) (bool, *object.Error) {
@@ -125,4 +142,14 @@ func checkArity(args []object.Object, expected int) (bool, *object.Error) {
 		return false, WrongArityError(len(args), 2)
 	}
 	return true, nil
+}
+
+func arrayContains(obj *object.Array, elm object.Object) bool {
+	elements := obj.Elements
+	for _, v := range elements {
+		if v.Inspect() == elm.Inspect() {
+			return true
+		}
+	}
+	return false
 }

@@ -111,3 +111,15 @@ func TestSliceBuiltin(t *testing.T) {
 		t.Fatalf("expected arr.Elements to be 0, got=%d", len(arr.Elements))
 	}
 }
+
+func TestContainsBuiltin(t *testing.T) {
+	input := `let a = [1, 2, 3]; contains(a, 1);`
+	evaluated := testEval(input)
+	b, ok := evaluated.(*object.Boolean)
+	if !ok {
+		t.Fatalf("expected evaluated to be object.Boolean, got=%s", evaluated.Type())
+	}
+	if b.Value != true {
+		t.Fatalf("expected b.Value to be true, got=%t", b.Value)
+	}
+}
