@@ -11,7 +11,13 @@ import (
 
 func TestSquareBracketAssignmentExpression(t *testing.T) {
 	input := "[1,2,3][0] = 4"
-	testIntegerObject(t, testEval(input), 4)
+	testEvalType[*object.Array](t, testEval(input).Inspect(), "[4, 2, 3]")
+
+	input = `
+let m = {1: 1}
+m[1] = 10
+`
+	testEvalType[*object.Hash](t, testEval(input).Inspect(), `{1: 10}`)
 }
 
 func TestAssignmentExpression(t *testing.T) {
@@ -825,7 +831,7 @@ func testEvalType[Type *object.Integer | *object.Float | *object.Boolean | *obje
 	evaluated := testEval(input)
 	_, ok := evaluated.(*object.Error)
 	if ok {
-		t.Errorf("expected evaluated to be T, got=%s", evaluated.Type())
+		t.Errorf("expected evaluated to be T, got=%s(%+v)", evaluated.Type(), evaluated)
 		return false
 	}
 
