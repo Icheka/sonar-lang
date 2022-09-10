@@ -42,7 +42,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
-		if _, ok := env.Get(node.Name.Value); ok {
+		if _, ok := env.Store[node.Name.Value]; ok {
 			return &object.Error{
 				Message: fmt.Sprintf("SyntaxError: Identifier '%s' has already been declared", node.Name.Value),
 			}
@@ -433,10 +433,13 @@ func evalNumberDivision[T int64 | float64](leftVal, rightVal T) object.Object {
 	}
 
 	result := float64(leftVal) / float64(rightVal)
-	if strings.Contains(fmt.Sprintf("%f", result), ".") {
-		return &object.Float{Value: result}
+	resultStr := fmt.Sprint(result)
+	if !strings.Contains(resultStr, ".") {
+		return &object.Integer{Value: int64(result)}
 	}
-	return &object.Integer{Value: int64(result)}
+	fmt.Println(result, " >>> ", resultStr)
+	// if strings.Index(resultStr, ".") != (len(resultStr) - 1)
+	return &object.Float{Value: result}
 }
 
 func evalStringInfixExpression(

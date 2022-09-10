@@ -83,7 +83,7 @@ func TestContainsBuiltin(t *testing.T) {
 		t.Fatalf("expected b.Value to be true, got=%t", b.Value)
 	}
 
-	input = `let a = "Icheka"; contains(a, "chw");`
+	input = `let a = "Icheka"; contains(a, "che");`
 	evaluated = testEval(input)
 	b, ok = evaluated.(*object.Boolean)
 	if !ok {
