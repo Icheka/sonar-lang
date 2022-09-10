@@ -7,6 +7,41 @@ import (
 	"testing"
 )
 
+func TestArraySquareBracketAssignmentExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+		key      int
+	}{
+		{`[1,2,3][0] = 2`, 2, 0},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statement. got=%d",
+				len(program.Statements))
+		}
+
+		exp := program.Statements[0].(*ast.ExpressionStatement)
+		arr, ok := exp.Expression.(*ast.SquareBracketAssignment)
+		if !ok {
+			t.Fatalf("expected exp.Expression to be *ast.ArraySquareBracketAssignment, got=%T", exp.Expression)
+		}
+
+		if arr.Key.String() != "0" {
+			t.Fatalf("expected arr.Key to be %T, got=%T", tt.key, arr.Key)
+		}
+		if arr.Value.String() != fmt.Sprint(tt.expected) {
+			t.Fatalf("expected arr.Value to be Integer, got=%T", arr.Key)
+		}
+	}
+}
+
 func TestAssignmentExpressions(t *testing.T) {
 	tests := []struct {
 		input              string
@@ -29,7 +64,7 @@ func TestAssignmentExpressions(t *testing.T) {
 		checkParserErrors(t, p)
 
 		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain 1 statements. got=%d",
+			t.Fatalf("program.Statements does not contain 1 statement. got=%d",
 				len(program.Statements))
 		}
 

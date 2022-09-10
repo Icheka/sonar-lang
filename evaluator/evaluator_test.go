@@ -9,6 +9,11 @@ import (
 	"testing"
 )
 
+func TestSquareBracketAssignmentExpression(t *testing.T) {
+	input := "[1,2,3][0] = 4"
+	testIntegerObject(t, testEval(input), 4)
+}
+
 func TestAssignmentExpression(t *testing.T) {
 	input := `
 let a = 1
@@ -873,6 +878,7 @@ func TestEvalArrayInfixExpression(t *testing.T) {
 		{"[1,2,3,4,5] + [6,7,8]", "[1, 2, 3, 4, 5, 6, 7, 8]"},
 		{"[1,2,3,4,5,6,7] / 2", "[[1, 2], [3, 4], [5, 6], [7]]"},
 		{"[1,2] - 0", "[2]"},
+		{"[1,2] * 2", "[[1, 2], [1, 2]]"},
 	}
 
 	for _, tt := range tests {

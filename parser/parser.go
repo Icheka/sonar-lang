@@ -510,6 +510,17 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 		return nil
 	}
 
+	if p.peekToken.Type == token.ASSIGN {
+		p.nextToken()
+		p.nextToken()
+		value := p.parseExpression(LOWEST)
+		return &ast.SquareBracketAssignment{
+			Token: exp.Token,
+			Value: value,
+			Key:   exp.Index,
+			Left:  left,
+		}
+	}
 	return exp
 }
 

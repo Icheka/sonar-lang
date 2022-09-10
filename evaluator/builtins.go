@@ -173,6 +173,29 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
+	"index": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return &object.Error{Message: fmt.Sprintf("index() takes 2 arguments, %d given", len(args))}
+			}
+
+			switch args[0].Type() {
+			case object.ARRAY_OBJ:
+				obj := args[0].(*object.Array)
+				elements := obj.Elements
+				subject := args[1].Inspect()
+				for i, v := range elements {
+					if v.Inspect() == subject {
+						return &object.Integer{Value: int64(i)}
+					}
+				}
+				return &object.Integer{Value: -1}
+
+			default:
+				return NewError("type of argument 1 to index() must be ARRAY or STRING")
+			}
+		},
+	},
 }
 
 func InitStdlib() {

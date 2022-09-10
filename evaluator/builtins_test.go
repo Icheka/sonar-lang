@@ -108,6 +108,29 @@ func TestContainsBuiltin(t *testing.T) {
 	}
 }
 
+func TestIndexBuiltin(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`index([1, 2, 3], 2)`, 1},
+		{`index([1, 2, 3], 6)`, -1},
+		{`index(1, 6)`, nil},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch evaluated.(type) {
+		case *object.Integer:
+			testEvalInteger(t, evaluated.Inspect(), tt.expected.(int))
+		case *object.Error:
+			if tt.expected != nil {
+				t.Fatalf("expected tt.expected to be error, got=%T", tt.expected)
+			}
+		}
+	}
+}
+
 func TestCopyBuiltin(t *testing.T) {
 	testEvalInteger(t, `copy(1);`, 1)
 	testEvalFloat(t, `copy(1.1);`, 1.1)

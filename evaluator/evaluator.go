@@ -166,6 +166,34 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
 
+	case *ast.SquareBracketAssignment:
+		left := Eval(node.Left, env)
+		index := Eval(node.Key, env)
+		value := Eval(node.Value, env)
+
+		if isError(left) {
+			return left
+		}
+		if isError(index) {
+			return index
+		}
+		if isError(value) {
+			return value
+		}
+
+		switch left.Type() {
+		case object.ARRAY_OBJ:
+			if i, ok := index.(*object.Integer); !ok {
+				return NewError("unacceptable index %s for array, index must be INTEGER, %T given", i.Inspect(), i)
+			}
+			return evalArraySquareBracketExpression(&left, index, value)
+
+		case object.HASH_OBJ:
+			return evalMapSquareBracketExpression(&left, index, value)
+
+		default:
+			return NewError("unacceptable type (%s) in key assignment operation", left.Type())
+		}
 	}
 
 	return nil
@@ -509,6 +537,13 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 			newArr := append(leftVal[0:rightVal], leftVal[rightVal+1:]...)
 			return &object.Array{Elements: newArr}
 
+		case token.ASTERISK:
+			newArr := []object.Object{}
+			for i := 0; i < int(rightVal); i++ {
+				newArr = append(newArr, &object.Array{Elements: leftVal})
+			}
+			return &object.Array{Elements: newArr}
+
 		default:
 			return NewError("unknown operator: %s %s %s",
 				left.Type(), operator, right.Type())
@@ -757,4 +792,31 @@ func evalPostfixExpression(env *object.Environment, node *ast.PostfixExpression)
 		return newInteger
 	}
 	return NewError("Unknown operator %s", node.Operator)
+}
+
+func evalArraySquareBracketExpression(left *object.Object, index, value object.Object) object.Object {
+	arr := (*left).(*object.Array)
+	idx := index.(*object.Integer).Value
+
+	if int(idx) > len(arr.Elements) {
+		return NewError("index operand (%d) to array index assignment out of bounds", idx)
+	}
+
+	arr.Elements[idx] = value
+
+	return arr
+}
+
+func evalMapSquareBracketExpression(left *object.Object, index, value object.Object) object.Object {
+	hash := (*left).(*object.Hash)
+
+	hashKey, ok := index.(object.Hashable)
+	if !ok {
+		return NewError("unusable as hash key: %s", index.Type())
+	}
+	hash.Pairs[hashKey.HashKey()] = object.HashPair{
+		Key:   index,
+		Value: value,
+	}
+	return hash
 }
