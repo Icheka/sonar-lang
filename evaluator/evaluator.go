@@ -6,6 +6,7 @@ import (
 	"sonar/v2/ast"
 	"sonar/v2/object"
 	"sonar/v2/token"
+	"sonar/v2/utils"
 	"strconv"
 	"strings"
 )
@@ -288,6 +289,9 @@ func evalInfixExpression(
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
 
+	case left.Type() == object.ARRAY_OBJ:
+		return evalArrayInfixExpression(operator, left, right)
+
 	case operator == token.EQ:
 		return nativeBoolToBooleanObject(left == right)
 
@@ -471,6 +475,37 @@ func evalStringInfixExpression(
 		return NewError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
+}
+
+func evalArrayInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.Array).Elements
+	if right.Type() == object.ARRAY_OBJ {
+		rightVal := right.(*object.Array).Elements
+
+		switch operator {
+		case token.PLUS:
+			return &object.Array{Elements: append(leftVal, rightVal...)}
+		default:
+			return NewError("unknown operator: %s %s %s",
+				left.Type(), operator, right.Type())
+		}
+	}
+
+	if right.Type() == object.INTEGER_OBJ {
+		rightVal := right.(*object.Integer)
+
+		switch operator {
+		case token.SLASH:
+			newArr := utils.SliceChunk(leftVal, int(rightVal.Value))
+
+			return &object.Array{Elements: newArr[0]}
+		default:
+			return NewError("unknown operator: %s %s %s",
+				left.Type(), operator, right.Type())
+		}
+	}
+
+	return NewError("unacceptable type on right-hand side of array infix operation: %s %s", operator, right.Type())
 }
 
 func evalIfExpression(
