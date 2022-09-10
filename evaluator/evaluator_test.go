@@ -5,6 +5,7 @@ import (
 	"sonar/v2/lexer"
 	"sonar/v2/object"
 	"sonar/v2/parser"
+	"sonar/v2/utils"
 	"testing"
 )
 
@@ -798,4 +799,85 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 		return false
 	}
 	return true
+}
+
+func testEvalInteger(t *testing.T, input string, expected int) bool {
+	evaluated := testEval(input)
+	obj, ok := evaluated.(*object.Integer)
+	if !ok {
+		t.Errorf("expected evaluated to be INTEGER, got=%s", evaluated.Type())
+		return false
+	}
+	if obj.Value != int64(expected) {
+		t.Errorf("expected obj.Value to be %d, got=%d", expected, obj.Value)
+		return false
+	}
+	return true
+}
+
+func testEvalFloat(t *testing.T, input string, expected float64) bool {
+	evaluated := testEval(input)
+	obj, ok := evaluated.(*object.Float)
+	if !ok {
+		t.Errorf("expected evaluated to be FLOAT, got=%s", evaluated.Type())
+		return false
+	}
+	if obj.Value != expected {
+		t.Errorf("expected obj.Value to be %f, got=%f", expected, obj.Value)
+		return false
+	}
+	return true
+}
+
+func testEvalType[Type *object.Integer | *object.Float | *object.Boolean | *object.String | *object.Function | *object.Builtin | *object.Array | *object.Hash, Expected int | string | bool](t *testing.T, input string, expected Expected) bool {
+	evaluated := testEval(input)
+	_, ok := evaluated.(*object.Error)
+	if ok {
+		t.Errorf("expected evaluated to be T, got=%s", evaluated.Type())
+		return false
+	}
+
+	if evaluated.Type() == object.INTEGER_OBJ {
+		return testEvalInteger(t, input, any(expected).(int))
+	}
+	if evaluated.Type() == object.FLOAT_OBJ {
+		return testEvalFloat(t, input, any(expected).(float64))
+	}
+
+	compareValue := any(expected).(string)
+	var passed bool
+
+	switch evaluated.Type() {
+	case object.BOOLEAN_OBJ:
+		b := any(evaluated).(*object.Boolean)
+		passed = b.Inspect() == compareValue
+
+	case object.STRING_OBJ:
+		s := any(evaluated).(*object.String)
+		passed = s.Inspect() == compareValue
+
+	case object.FUNCTION_OBJ:
+		compareValue = utils.StripWhitespace(compareValue)
+		f := any(evaluated).(*object.Function)
+		inspected := utils.StripWhitespace(f.Inspect())
+		passed = inspected == compareValue
+
+	case object.ARRAY_OBJ:
+		a := any(evaluated).(*object.Array)
+		passed = a.Inspect() == compareValue
+
+	case object.HASH_OBJ:
+		h := any(evaluated).(*object.Hash)
+		passed = h.Inspect() == compareValue
+	}
+
+	if !passed {
+		t.Fatalf("%s is not equal to %s", evaluated.Inspect(), compareValue)
+		return false
+	}
+	return true
+}
+
+func StripWhitespace(compareValue, s1, s2 string) {
+	panic("unimplemented")
 }
