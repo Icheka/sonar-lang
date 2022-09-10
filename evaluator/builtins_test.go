@@ -75,15 +75,15 @@ func TestSliceBuiltin(t *testing.T) {
 		t.Fatalf("expected elm.Value to be 5, got=%d", elm.Value)
 	}
 
-	// input = `let a = [1, 2, 3]; a = slice(a, -1, -1);`
-	// evaluated = testEval(input)
-	// arr, ok = evaluated.(*object.Array)
-	// if !ok {
-	// 	t.Fatalf("expected evaluated to be object.Array, got=%s", evaluated.Type())
-	// }
-	// if len(arr.Elements) != 0 {
-	// 	t.Fatalf("expected arr.Elements to be 0, got=%d", len(arr.Elements))
-	// }
+	input = `let a = [1, 2, 3]; a = slice(a, -1, -1);`
+	evaluated = testEval(input)
+	arr, ok = evaluated.(*object.Array)
+	if !ok {
+		t.Fatalf("expected evaluated to be object.Array, got=%s", evaluated.Type())
+	}
+	if len(arr.Elements) != 0 {
+		t.Fatalf("expected arr.Elements to be 0, got=%d", len(arr.Elements))
+	}
 }
 
 func TestContainsBuiltin(t *testing.T) {

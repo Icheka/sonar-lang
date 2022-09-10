@@ -6,7 +6,6 @@ import (
 	"sonar/v2/ast"
 	"sonar/v2/object"
 	"sonar/v2/token"
-	"sonar/v2/utils"
 	"strconv"
 	"strings"
 )
@@ -498,8 +497,7 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 
 		switch operator {
 		case token.SLASH:
-			newArr := utils.SliceChunk(leftVal, int(rightVal.Value))
-			return &object.Array{Elements: newArr[0]}
+			return &object.Array{Elements: leftVal}
 
 		case token.MINUS:
 			newArr := append(leftVal[0:rightVal.Value], leftVal[rightVal.Value:]...)
