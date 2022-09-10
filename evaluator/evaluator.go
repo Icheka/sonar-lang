@@ -6,6 +6,7 @@ import (
 	"sonar/v2/ast"
 	"sonar/v2/object"
 	"sonar/v2/token"
+	"sonar/v2/utils"
 	"strconv"
 	"strings"
 )
@@ -493,14 +494,19 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 	}
 
 	if right.Type() == object.INTEGER_OBJ {
-		rightVal := right.(*object.Integer)
+		rightVal := right.(*object.Integer).Value
 
 		switch operator {
 		case token.SLASH:
-			return &object.Array{Elements: leftVal}
+			if arr, ok := left.(*object.Array); ok {
+				return utils.SliceChunkAsArrayObject(arr, int(rightVal))
+			}
 
 		case token.MINUS:
-			newArr := append(leftVal[0:rightVal.Value], leftVal[rightVal.Value:]...)
+			if int(rightVal) > len(leftVal) {
+				return NewError("unacceptable value on right side of array infix operation: right side %d is greater than length of array", len(leftVal))
+			}
+			newArr := append(leftVal[0:rightVal], leftVal[rightVal+1:]...)
 			return &object.Array{Elements: newArr}
 
 		default:

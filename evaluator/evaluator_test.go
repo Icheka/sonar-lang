@@ -865,6 +865,17 @@ func testEvalType[Type *object.Integer | *object.Float | *object.Boolean | *obje
 	return true
 }
 
-func StripWhitespace(compareValue, s1, s2 string) {
-	panic("unimplemented")
+func TestEvalArrayInfixExpression(t *testing.T) {
+	tests := []struct {
+		input         string
+		expectedValue string
+	}{
+		{"[1,2,3,4,5] + [6,7,8]", "[1, 2, 3, 4, 5, 6, 7, 8]"},
+		{"[1,2,3,4,5,6,7] / 2", "[[1, 2], [3, 4], [5, 6], [7]]"},
+		{"[1,2] - 0", "[2]"},
+	}
+
+	for _, tt := range tests {
+		testEvalType[*object.Array](t, tt.input, tt.expectedValue)
+	}
 }
