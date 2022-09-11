@@ -9,9 +9,24 @@ import (
 	"testing"
 )
 
+func TestDeleteMapKeyExpression(t *testing.T) {
+	input := `
+let m  = {1: 2}
+m - 1
+`
+	testEvalType[*object.Hash](t, testEval(input).Inspect(), "{}")
+}
+
 func TestSquareBracketAssignmentExpression(t *testing.T) {
 	input := "[1,2,3][0] = 4"
 	testEvalType[*object.Array](t, testEval(input).Inspect(), "[4, 2, 3]")
+
+	// an out-of-bounds index operation	returns error
+	input = "[1,2,3][9] = 4"
+	evaluated := testEval(input)
+	if _, ok := evaluated.(*object.Error); !ok {
+		t.Fatalf("expected evaluated to be ERROR, got=%T", evaluated)
+	}
 
 	input = `
 let m = {1: 1}

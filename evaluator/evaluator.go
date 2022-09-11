@@ -302,7 +302,7 @@ func evalInfixExpression(
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
 		return evalFloatInfixExpression(operator, left, right)
 
-	// if types are mismatched, cast the integer type to float
+	// if number types are mismatched, cast the integer type to float
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		right = &object.Float{
 			Value: float64(right.(*object.Integer).Value),
@@ -319,6 +319,9 @@ func evalInfixExpression(
 
 	case left.Type() == object.ARRAY_OBJ:
 		return evalArrayInfixExpression(operator, left, right)
+
+	case left.Type() == object.HASH_OBJ:
+		return evalMapInfixExpression(operator, left, right)
 
 	case operator == token.EQ:
 		return nativeBoolToBooleanObject(left == right)
@@ -503,6 +506,29 @@ func evalStringInfixExpression(
 	default:
 		return NewError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
+	}
+}
+
+func evalMapInfixExpression(operator string, left, right object.Object) object.Object {
+	switch operator {
+	case token.MINUS:
+		hashKey, ok := right.(object.Hashable)
+		if !ok {
+			return NewError("unusable as hash key: %s", right.Type())
+		}
+		pairs := left.(*object.Hash).Pairs
+		for _, key := range pairs {
+			if key.Key.Inspect() == right.Inspect() {
+				delete(pairs, hashKey.HashKey())
+			}
+		}
+
+		return &object.Hash{
+			Pairs: pairs,
+		}
+
+	default:
+		return NewError("unacceptable operator operation with map type")
 	}
 }
 
