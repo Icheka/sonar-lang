@@ -31,6 +31,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return Eval(node.Expression, env)
 
 	case *ast.ReturnStatement:
+		if node.ReturnValue == nil {
+			node.ReturnValue = &ast.NullValueExpression{}
+		}
 		val := Eval(node.ReturnValue, env)
 		if isError(val) {
 			return val
@@ -47,7 +50,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 				Message: fmt.Sprintf("SyntaxError: Identifier '%s' has already been declared", node.Name.Value),
 			}
 		}
-		env.Set(node.Name.Value, val)
+		return env.Set(node.Name.Value, val)
 
 	case *ast.AssignmentExpression:
 		right := Eval(node.Value, env)
@@ -80,7 +83,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 				return result
 			}
 		}
-		return env.Set(node.Identifier.Value, result)
+		env.Set(node.Identifier.Value, result)
+		return &object.Null{}
 
 	case *ast.WhileStatement:
 		return evalWhileStatement(node, env)
@@ -194,6 +198,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		default:
 			return NewError("unacceptable type (%s) in key assignment operation", left.Type())
 		}
+
+	case *ast.NullValueExpression:
+		return &object.Null{}
 	}
 
 	return nil

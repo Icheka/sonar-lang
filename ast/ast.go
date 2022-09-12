@@ -425,3 +425,11 @@ func (as *SquareBracketAssignment) String() string {
 
 	return out.String()
 }
+
+type NullValueExpression struct{}
+
+func (nv *NullValueExpression) expressionNode()      {}
+func (nv *NullValueExpression) TokenLiteral() string { return "null" }
+func (nv *NullValueExpression) String() string {
+	return nv.TokenLiteral()
+}

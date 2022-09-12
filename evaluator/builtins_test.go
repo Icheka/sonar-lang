@@ -5,6 +5,29 @@ import (
 	"testing"
 )
 
+func TestSortBuiltin(t *testing.T) {
+	input := `
+let a = [3,1,2]
+sort(a)
+`
+	evaluated := testEval(input)
+	arr, ok := evaluated.(*object.Array)
+	if !ok {
+		t.Fatalf("expected evaluated to be object.Array, got=%T", evaluated)
+	}
+	elements := []int{}
+	for _, v := range arr.Elements {
+		elements = append(elements, int(v.(*object.Integer).Value))
+	}
+
+	expected := []int{1, 2, 3}
+	for i, v := range expected {
+		if elements[i] != v {
+			t.Fatalf("elements != expected")
+		}
+	}
+}
+
 func TestSliceBuiltin(t *testing.T) {
 	// calling slice without args returns error
 	input := `let a = [1, 2, 3]; a = slice();`
