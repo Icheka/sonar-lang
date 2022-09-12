@@ -905,4 +905,18 @@ func TestEvalArrayInfixExpression(t *testing.T) {
 	for _, tt := range tests {
 		testEvalType[*object.Array](t, tt.input, tt.expectedValue)
 	}
+
+	tests = []struct {
+		input         string
+		expectedValue string
+	}{
+		{"[1] == [1]", "true"},
+		{"[1] == [2]", "false"},
+		{"[1] != [2]", "true"},
+		{"[1] != [1]", "false"},
+	}
+
+	for _, tt := range tests {
+		testEvalType[*object.Boolean](t, tt.input, tt.expectedValue)
+	}
 }

@@ -200,7 +200,7 @@ var builtins = map[string]*object.Builtin{
 	},
 	"sort": {
 		Fn: func(args ...object.Object) object.Object {
-			if len(args) == 0 || len(args) > 2 {
+			if len(args) != 1 {
 				return &object.Error{Message: fmt.Sprintf("sort() takes 1 argument, %d given", len(args))}
 			}
 			switch args[0].Type() {

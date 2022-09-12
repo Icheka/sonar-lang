@@ -65,6 +65,33 @@ func SortObjectArray(arr *object.Array) *object.Array {
 	return &object.Array{Elements: sortedElements}
 }
 
+func SortObjectArrayWithFunction(arr *object.Array) [][]object.Object {
+	args := [][]object.Object{}
+
+	for i, v := range arr.Elements {
+		ownArr := interface{}(arr.Elements).(*object.Object)
+		arg := []object.Object{}
+
+		if i == len(arr.Elements)-1 {
+			arg = []object.Object{
+				v,
+				v,
+				*ownArr,
+			}
+		} else {
+			arg = []object.Object{
+				&object.Integer{Value: int64(i)},
+				v,
+				arr.Elements[i+1],
+				*ownArr,
+			}
+		}
+		args = append(args, arg)
+	}
+
+	return args
+}
+
 func ObjectArrayEqual(arr1, arr2 *object.Array) bool {
 	for i, v := range arr1.Elements {
 		if i == len(arr2.Elements) {

@@ -40,9 +40,7 @@ func main() {
 				}
 			}
 			if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated != nil {
-				if _, ok := evaluated.(*object.Function); !ok {
-					fmt.Printf("%s\n", evaluated.Inspect())
-				}
+				fmt.Printf("%s\n", evaluated.Inspect())
 			}
 
 			return
