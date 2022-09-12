@@ -64,3 +64,16 @@ func SortObjectArray(arr *object.Array) *object.Array {
 
 	return &object.Array{Elements: sortedElements}
 }
+
+func ObjectArrayEqual(arr1, arr2 *object.Array) bool {
+	for i, v := range arr1.Elements {
+		if i == len(arr2.Elements) {
+			return false
+		}
+		elm := arr2.Elements[i]
+		if elm.Type() == v.Type() && elm.Inspect() == v.Inspect() {
+			return true
+		}
+	}
+	return false
+}

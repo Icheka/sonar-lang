@@ -548,6 +548,16 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 		case token.PLUS:
 			return &object.Array{Elements: append(leftVal, rightVal...)}
 
+		case token.EQ:
+			arr1, _ := left.(*object.Array)
+			arr2, _ := right.(*object.Array)
+			return &object.Boolean{Value: utils.ObjectArrayEqual(arr1, arr2)}
+
+		case token.NOT_EQ:
+			arr1, _ := left.(*object.Array)
+			arr2, _ := right.(*object.Array)
+			return &object.Boolean{Value: !utils.ObjectArrayEqual(arr1, arr2)}
+
 		default:
 			return NewError("unknown operator: %s %s %s",
 				left.Type(), operator, right.Type())
