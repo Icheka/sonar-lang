@@ -2,6 +2,7 @@ package utils
 
 import (
 	"sonar/v2/object"
+	"sort"
 )
 
 func SliceContains[T comparable](slice []T, elm T) bool {
@@ -37,4 +38,29 @@ func SliceChunkAsArrayObject(arr *object.Array, size int) *object.Array {
 	}
 
 	return &object.Array{Elements: result}
+}
+
+func SortObjectArray(arr *object.Array) *object.Array {
+	elementsMap := map[int]object.Object{}
+	elementsSlice := []string{}
+
+	for i, v := range arr.Elements {
+		elementsMap[i] = v
+		elementsSlice = append(elementsSlice, v.Inspect())
+	}
+
+	sort.Slice(elementsSlice, func(i, j int) bool {
+		return elementsSlice[i] < elementsSlice[j]
+	})
+
+	sortedElements := []object.Object{}
+	for _, v := range elementsSlice {
+		for _, mapV := range elementsMap {
+			if mapV.Inspect() == v {
+				sortedElements = append(sortedElements, mapV)
+			}
+		}
+	}
+
+	return &object.Array{Elements: sortedElements}
 }

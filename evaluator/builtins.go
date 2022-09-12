@@ -3,7 +3,7 @@ package evaluator
 import (
 	"fmt"
 	"sonar/v2/object"
-	"sort"
+	"sonar/v2/utils"
 )
 
 var builtins = map[string]*object.Builtin{
@@ -200,34 +200,13 @@ var builtins = map[string]*object.Builtin{
 	},
 	"sort": {
 		Fn: func(args ...object.Object) object.Object {
-			if len(args) != 1 {
+			if len(args) == 0 || len(args) > 2 {
 				return &object.Error{Message: fmt.Sprintf("sort() takes 1 argument, %d given", len(args))}
 			}
 			switch args[0].Type() {
 			case object.ARRAY_OBJ:
-				elementsMap := map[int]object.Object{}
-				elementsSlice := []string{}
 				arr := args[0].(*object.Array)
-
-				for i, v := range arr.Elements {
-					elementsMap[i] = v
-					elementsSlice = append(elementsSlice, v.Inspect())
-				}
-
-				sort.Slice(elementsSlice, func(i, j int) bool {
-					return elementsSlice[i] < elementsSlice[j]
-				})
-
-				sortedElements := []object.Object{}
-				for _, v := range elementsSlice {
-					for _, mapV := range elementsMap {
-						if mapV.Inspect() == v {
-							sortedElements = append(sortedElements, mapV)
-						}
-					}
-				}
-
-				return &object.Array{Elements: sortedElements}
+				return utils.SortObjectArray(arr)
 
 			default:
 				return NewError("argument to sort() must be of type ARRAY")
