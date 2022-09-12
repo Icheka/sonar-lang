@@ -3,12 +3,13 @@ package evaluator
 import (
 	"fmt"
 	"sonar/v2/object"
+	"sonar/v2/utils"
 )
 
 var builtins = map[string]*object.Builtin{
 	"len": &object.Builtin{Fn: func(args ...object.Object) object.Object {
 		if len(args) != 1 {
-			return newError("wrong number of arguments. got=%d, want=1",
+			return NewError("wrong number of arguments. got=%d, want=1",
 				len(args))
 		}
 
@@ -18,100 +19,210 @@ var builtins = map[string]*object.Builtin{
 		case *object.String:
 			return &object.Integer{Value: int64(len(arg.Value))}
 		default:
-			return newError("argument to `len` not supported, got %s",
+			return NewError("argument to `len` not supported, got %s",
 				args[0].Type())
 		}
 	},
 	},
-	"print": &object.Builtin{
+	"print": {
 		Fn: func(args ...object.Object) object.Object {
 			for _, arg := range args {
-				fmt.Println(arg.Inspect())
+				fmt.Printf("%s ", arg.Inspect())
 			}
+			fmt.Printf("\n")
 
 			return NULL
 		},
 	},
-	"first": &object.Builtin{
+	"slice": {
 		Fn: func(args ...object.Object) object.Object {
-			if len(args) != 1 {
-				return newError("wrong number of arguments. got=%d, want=1",
-					len(args))
+			/*
+				slice(arr)
+				-- returns a copy of arr
+				slice(arr, n)
+				-- returns a copy of arr[n:]
+				slice(arr, n, m)
+				-- returns a copy of arr[n:m]
+				slice(arr, n, m, y)
+				-- returns a copy of arr[n:m:y]
+				-- indices wrap around len(arr) when negative
+			*/
+			if len(args) == 0 {
+				return NewError("`slice` requires at least 1 argument")
 			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `first` must be ARRAY, got %s",
+			obj := args[0]
+			if obj.Type() != object.ARRAY_OBJ && obj.Type() != object.STRING_OBJ {
+				return NewError("first argument to `slice` must be of type ARRAY or STRING, got %s",
 					args[0].Type())
 			}
-
-			arr := args[0].(*object.Array)
-			if len(arr.Elements) > 0 {
-				return arr.Elements[0]
+			if len(args) > 4 {
+				return NewError("`slice` requires at most 4 arguments, %d given", len(args))
 			}
 
-			return NULL
+			switch obj.Type() {
+			case object.ARRAY_OBJ:
+				if len(args) == 1 {
+					return &object.Array{Elements: obj.(*object.Array).Elements}
+				}
+
+				for i, arg := range args[1:] {
+					if arg.Type() != object.INTEGER_OBJ {
+						return NewError("ordinal argument to `slice` at index %d must be INTEGER, %s given", i, arg.Type())
+					}
+				}
+				start := int(args[1].(*object.Integer).Value)
+				originalArray := obj.(*object.Array).Elements
+				if start < 0 {
+					start = len(originalArray) + start
+				}
+				if len(args) == 2 {
+					return &object.Array{Elements: originalArray[start:]}
+				}
+
+				end := int(args[2].(*object.Integer).Value)
+				if end < 0 {
+					end = len(originalArray) + end
+				}
+
+				newArray := []object.Object{}
+				if len(args) == 3 {
+					newArray = originalArray[start:end]
+				} else {
+					step := int(args[3].(*object.Integer).Value)
+					if step < 0 {
+						step = len(originalArray) + step
+					}
+					for k, v := range originalArray {
+						if k%step == 0 {
+							newArray = append(newArray, v)
+						}
+					}
+				}
+
+				return &object.Array{Elements: newArray}
+			default:
+				return &object.Array{Elements: []object.Object{}}
+			}
 		},
 	},
-	"last": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
-			if len(args) != 1 {
-				return newError("wrong number of arguments. got=%d, want=1",
-					len(args))
-			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `last` must be ARRAY, got %s",
-					args[0].Type())
-			}
-
-			arr := args[0].(*object.Array)
-			length := len(arr.Elements)
-			if length > 0 {
-				return arr.Elements[length-1]
-			}
-
-			return NULL
-		},
-	},
-	"rest": &object.Builtin{
-		Fn: func(args ...object.Object) object.Object {
-			if len(args) != 1 {
-				return newError("wrong number of arguments. got=%d, want=1",
-					len(args))
-			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `rest` must be ARRAY, got %s",
-					args[0].Type())
-			}
-
-			arr := args[0].(*object.Array)
-			length := len(arr.Elements)
-			if length > 0 {
-				newElements := make([]object.Object, length-1, length-1)
-				copy(newElements, arr.Elements[1:length])
-				return &object.Array{Elements: newElements}
-			}
-
-			return NULL
-		},
-	},
-	"push": &object.Builtin{
+	"contains": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
-				return newError("wrong number of arguments. got=%d, want=2",
-					len(args))
+				return NewError("`contains` requires at 2 arguments, got=%d", len(args))
 			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `push` must be ARRAY, got %s",
+			obj := args[0]
+			elm := args[1]
+
+			switch obj.Type() {
+			case object.ARRAY_OBJ:
+				return &object.Boolean{Value: arrayContains(obj.(*object.Array), elm)}
+			case object.STRING_OBJ:
+				return &object.Boolean{Value: stringContains(obj.(*object.String), elm)}
+			default:
+				return NewError("first argument to `contains` must be of type ARRAY or STRING, got %s",
 					args[0].Type())
 			}
-
-			arr := args[0].(*object.Array)
-			length := len(arr.Elements)
-
-			newElements := make([]object.Object, length+1, length+1)
-			copy(newElements, arr.Elements)
-			newElements[length] = args[1]
-
-			return &object.Array{Elements: newElements}
 		},
 	},
+	"copy": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return &object.Error{Message: fmt.Sprintf("copy() takes 1 argument, %d given", len(args))}
+			}
+			obj := args[0]
+
+			switch obj.Type() {
+			case object.INTEGER_OBJ:
+				return &object.Integer{Value: obj.(*object.Integer).Value}
+
+			case object.FLOAT_OBJ:
+				return &object.Float{Value: obj.(*object.Float).Value}
+
+			case object.BOOLEAN_OBJ:
+				return &object.Boolean{Value: obj.(*object.Boolean).Value}
+
+			case object.STRING_OBJ:
+				return &object.String{Value: obj.(*object.String).Value}
+
+			case object.FUNCTION_OBJ:
+				fn := obj.(*object.Function)
+				return &object.Function{
+					Parameters: fn.Parameters,
+					Body:       fn.Body,
+					Env:        fn.Env,
+				}
+
+			case object.ARRAY_OBJ:
+				arr := obj.(*object.Array)
+				return &object.Array{Elements: arr.Elements}
+
+			case object.HASH_OBJ:
+				hash := obj.(*object.Hash)
+				return &object.Hash{Pairs: hash.Pairs}
+
+			default:
+				return &object.Error{Message: fmt.Sprintf("Type %s cannot be copied", obj.Type())}
+			}
+		},
+	},
+	"type": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return &object.Error{Message: fmt.Sprintf("type() takes 1 argument, %d given", len(args))}
+			}
+			return &object.String{
+				Value: string(args[0].Type()),
+			}
+		},
+	},
+	"index": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return &object.Error{Message: fmt.Sprintf("index() takes 2 arguments, %d given", len(args))}
+			}
+
+			switch args[0].Type() {
+			case object.ARRAY_OBJ:
+				obj := args[0].(*object.Array)
+				elements := obj.Elements
+				subject := args[1].Inspect()
+				for i, v := range elements {
+					if v.Inspect() == subject {
+						return &object.Integer{Value: int64(i)}
+					}
+				}
+				return &object.Integer{Value: -1}
+
+			default:
+				return NewError("type of argument 1 to index() must be ARRAY or STRING")
+			}
+		},
+	},
+	"sort": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return &object.Error{Message: fmt.Sprintf("sort() takes 1 argument, %d given", len(args))}
+			}
+			switch args[0].Type() {
+			case object.ARRAY_OBJ:
+				arr := args[0].(*object.Array)
+				return utils.SortObjectArray(arr)
+
+			default:
+				return NewError("argument to sort() must be of type ARRAY")
+			}
+		},
+	},
+}
+
+func InitStdlib() {
+	var stdlibFunctions = []map[string]*object.Builtin{
+		ArrayBuiltins,
+	}
+
+	for _, f := range stdlibFunctions {
+		for k, v := range f {
+			builtins[k] = v
+		}
+	}
 }

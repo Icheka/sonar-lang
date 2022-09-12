@@ -6,6 +6,7 @@ import (
 	"sonar/v2/ast"
 	"sonar/v2/object"
 	"sonar/v2/token"
+	"sonar/v2/utils"
 	"strconv"
 	"strings"
 )
@@ -30,6 +31,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return Eval(node.Expression, env)
 
 	case *ast.ReturnStatement:
+		if node.ReturnValue == nil {
+			node.ReturnValue = &ast.NullValueExpression{}
+		}
 		val := Eval(node.ReturnValue, env)
 		if isError(val) {
 			return val
@@ -41,12 +45,12 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
-		if _, ok := env.Get(node.Name.Value); ok {
+		if _, ok := env.Store[node.Name.Value]; ok {
 			return &object.Error{
 				Message: fmt.Sprintf("SyntaxError: Identifier '%s' has already been declared", node.Name.Value),
 			}
 		}
-		env.Set(node.Name.Value, val)
+		return env.Set(node.Name.Value, val)
 
 	case *ast.AssignmentExpression:
 		right := Eval(node.Value, env)
@@ -79,7 +83,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 				return result
 			}
 		}
-		return env.Set(node.Identifier.Value, result)
+		env.Set(node.Identifier.Value, result)
+		return &object.Null{}
 
 	case *ast.WhileStatement:
 		return evalWhileStatement(node, env)
@@ -165,6 +170,37 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
 
+	case *ast.SquareBracketAssignment:
+		left := Eval(node.Left, env)
+		index := Eval(node.Key, env)
+		value := Eval(node.Value, env)
+
+		if isError(left) {
+			return left
+		}
+		if isError(index) {
+			return index
+		}
+		if isError(value) {
+			return value
+		}
+
+		switch left.Type() {
+		case object.ARRAY_OBJ:
+			if i, ok := index.(*object.Integer); !ok {
+				return NewError("unacceptable index %s for array, index must be INTEGER, %T given", i.Inspect(), i)
+			}
+			return evalArraySquareBracketExpression(&left, index, value)
+
+		case object.HASH_OBJ:
+			return evalMapSquareBracketExpression(&left, index, value)
+
+		default:
+			return NewError("unacceptable type (%s) in key assignment operation", left.Type())
+		}
+
+	case *ast.NullValueExpression:
+		return &object.Null{}
 	}
 
 	return nil
@@ -247,7 +283,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	case "-":
 		return evalMinusPrefixOperatorExpression(right)
 	default:
-		return newError("unknown operator: %s%s", operator, right.Type())
+		return NewError("unknown operator: %s%s", operator, right.Type())
 	}
 }
 
@@ -273,7 +309,7 @@ func evalInfixExpression(
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
 		return evalFloatInfixExpression(operator, left, right)
 
-	// if types are mismatched, cast the integer type to float
+	// if number types are mismatched, cast the integer type to float
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		right = &object.Float{
 			Value: float64(right.(*object.Integer).Value),
@@ -288,6 +324,12 @@ func evalInfixExpression(
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
 
+	case left.Type() == object.ARRAY_OBJ:
+		return evalArrayInfixExpression(operator, left, right)
+
+	case left.Type() == object.HASH_OBJ:
+		return evalMapInfixExpression(operator, left, right)
+
 	case operator == token.EQ:
 		return nativeBoolToBooleanObject(left == right)
 
@@ -295,11 +337,11 @@ func evalInfixExpression(
 		return nativeBoolToBooleanObject(left != right)
 
 	case left.Type() != right.Type():
-		return newError("type mismatch: %s %s %s",
+		return NewError("type mismatch: %s %s %s",
 			left.Type(), operator, right.Type())
 
 	default:
-		return newError("unknown operator: %s %s %s",
+		return NewError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
 }
@@ -319,7 +361,7 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 
 func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	if right.Type() != object.INTEGER_OBJ && right.Type() != object.FLOAT_OBJ {
-		return newError("unknown operator: -%s", right.Type())
+		return NewError("unknown operator: -%s", right.Type())
 	}
 
 	if right.Type() == object.INTEGER_OBJ {
@@ -378,7 +420,7 @@ func evalIntegerInfixExpression(
 	case token.GTE:
 		return nativeBoolToBooleanObject(leftVal >= rightVal)
 	default:
-		return newError("unknown operator: %s %s %s",
+		return NewError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
 }
@@ -415,7 +457,7 @@ func evalFloatInfixExpression(
 	case token.GTE:
 		return nativeBoolToBooleanObject(leftVal >= rightVal)
 	default:
-		return newError("unknown operator: %s %s %s",
+		return NewError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
 }
@@ -429,10 +471,11 @@ func evalNumberDivision[T int64 | float64](leftVal, rightVal T) object.Object {
 	}
 
 	result := float64(leftVal) / float64(rightVal)
-	if strings.Contains(fmt.Sprintf("%f", result), ".") {
-		return &object.Float{Value: result}
+	resultStr := fmt.Sprint(result)
+	if !strings.Contains(resultStr, ".") {
+		return &object.Integer{Value: int64(result)}
 	}
-	return &object.Integer{Value: int64(result)}
+	return &object.Float{Value: result}
 }
 
 func evalStringInfixExpression(
@@ -468,9 +511,89 @@ func evalStringInfixExpression(
 		return nativeBoolToBooleanObject(leftVal >= rightVal)
 
 	default:
-		return newError("unknown operator: %s %s %s",
+		return NewError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
+}
+
+func evalMapInfixExpression(operator string, left, right object.Object) object.Object {
+	switch operator {
+	case token.MINUS:
+		hashKey, ok := right.(object.Hashable)
+		if !ok {
+			return NewError("unusable as hash key: %s", right.Type())
+		}
+		pairs := left.(*object.Hash).Pairs
+		for _, key := range pairs {
+			if key.Key.Inspect() == right.Inspect() {
+				delete(pairs, hashKey.HashKey())
+			}
+		}
+
+		return &object.Hash{
+			Pairs: pairs,
+		}
+
+	default:
+		return NewError("unacceptable operator operation with map type")
+	}
+}
+
+func evalArrayInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.Array).Elements
+	if right.Type() == object.ARRAY_OBJ {
+		rightVal := right.(*object.Array).Elements
+
+		switch operator {
+		case token.PLUS:
+			return &object.Array{Elements: append(leftVal, rightVal...)}
+
+		case token.EQ:
+			arr1, _ := left.(*object.Array)
+			arr2, _ := right.(*object.Array)
+			return &object.Boolean{Value: utils.ObjectArrayEqual(arr1, arr2)}
+
+		case token.NOT_EQ:
+			arr1, _ := left.(*object.Array)
+			arr2, _ := right.(*object.Array)
+			return &object.Boolean{Value: !utils.ObjectArrayEqual(arr1, arr2)}
+
+		default:
+			return NewError("unknown operator: %s %s %s",
+				left.Type(), operator, right.Type())
+		}
+	}
+
+	if right.Type() == object.INTEGER_OBJ {
+		rightVal := right.(*object.Integer).Value
+
+		switch operator {
+		case token.SLASH:
+			if arr, ok := left.(*object.Array); ok {
+				return utils.SliceChunkAsArrayObject(arr, int(rightVal))
+			}
+
+		case token.MINUS:
+			if int(rightVal) > len(leftVal) {
+				return NewError("unacceptable value on right side of array infix operation: right side %d is greater than length of array", len(leftVal))
+			}
+			newArr := append(leftVal[0:rightVal], leftVal[rightVal+1:]...)
+			return &object.Array{Elements: newArr}
+
+		case token.ASTERISK:
+			newArr := []object.Object{}
+			for i := 0; i < int(rightVal); i++ {
+				newArr = append(newArr, &object.Array{Elements: leftVal})
+			}
+			return &object.Array{Elements: newArr}
+
+		default:
+			return NewError("unknown operator: %s %s %s",
+				left.Type(), operator, right.Type())
+		}
+	}
+
+	return NewError("unacceptable type on right-hand side of array infix operation: %s %s", operator, right.Type())
 }
 
 func evalIfExpression(
@@ -503,7 +626,7 @@ func evalIdentifier(
 		return builtin
 	}
 
-	return newError("identifier not found: " + node.Value)
+	return NewError("identifier not found: " + node.Value)
 }
 
 func isTruthy(obj object.Object) bool {
@@ -519,7 +642,7 @@ func isTruthy(obj object.Object) bool {
 	}
 }
 
-func newError(format string, a ...interface{}) *object.Error {
+func NewError(format string, a ...interface{}) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
 
@@ -559,7 +682,7 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 		return fn.Fn(args...)
 
 	default:
-		return newError("not a function: %s", fn.Type())
+		return NewError("not a function: %s", fn.Type())
 	}
 }
 
@@ -593,7 +716,7 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	case left.Type() == object.HASH_OBJ:
 		return evalHashIndexExpression(left, index)
 	default:
-		return newError("index operator not supported: %s", left.Type())
+		return NewError("index operator not supported: %s", left.Type())
 	}
 }
 
@@ -643,7 +766,7 @@ func evalHashLiteral(
 
 		hashKey, ok := key.(object.Hashable)
 		if !ok {
-			return newError("unusable as hash key: %s", key.Type())
+			return NewError("unusable as hash key: %s", key.Type())
 		}
 
 		value := Eval(valueNode, env)
@@ -663,7 +786,7 @@ func evalHashIndexExpression(hash, index object.Object) object.Object {
 
 	key, ok := index.(object.Hashable)
 	if !ok {
-		return newError("unusable as hash key: %s", index.Type())
+		return NewError("unusable as hash key: %s", index.Type())
 	}
 
 	pair, ok := hashObject.Pairs[key.HashKey()]
@@ -686,7 +809,7 @@ func evalPostfixExpression(env *object.Environment, node *ast.PostfixExpression)
 		if intValue, ok := strconv.ParseInt(tokenLiteral, 10, 64); ok == nil {
 			tok = &object.Integer{Value: intValue}
 		} else {
-			return newError("Unknown token %s", tokenLiteral)
+			return NewError("Unknown token %s", tokenLiteral)
 		}
 	}
 
@@ -694,7 +817,7 @@ func evalPostfixExpression(env *object.Environment, node *ast.PostfixExpression)
 	case token.POST_INCR:
 		integer, ok := tok.(*object.Integer)
 		if !ok {
-			return newError("Left side of post-increment operator must be of type int, got %s", tokenLiteral)
+			return NewError("Left side of post-increment operator must be of type int, got %s", tokenLiteral)
 		}
 
 		newInteger := &object.Integer{Value: integer.Value + 1}
@@ -704,12 +827,39 @@ func evalPostfixExpression(env *object.Environment, node *ast.PostfixExpression)
 	case token.POST_DECR:
 		integer, ok := tok.(*object.Integer)
 		if !ok {
-			return newError("Left side of post-decrement operator must be of type int, got %s", tokenLiteral)
+			return NewError("Left side of post-decrement operator must be of type int, got %s", tokenLiteral)
 		}
 
 		newInteger := &object.Integer{Value: integer.Value - 1}
 		env.Set(tokenLiteral, newInteger)
 		return newInteger
 	}
-	return newError("Unknown operator %s", node.Operator)
+	return NewError("Unknown operator %s", node.Operator)
+}
+
+func evalArraySquareBracketExpression(left *object.Object, index, value object.Object) object.Object {
+	arr := (*left).(*object.Array)
+	idx := index.(*object.Integer).Value
+
+	if int(idx) > len(arr.Elements) {
+		return NewError("index operand (%d) to array index assignment out of bounds", idx)
+	}
+
+	arr.Elements[idx] = value
+
+	return arr
+}
+
+func evalMapSquareBracketExpression(left *object.Object, index, value object.Object) object.Object {
+	hash := (*left).(*object.Hash)
+
+	hashKey, ok := index.(object.Hashable)
+	if !ok {
+		return NewError("unusable as hash key: %s", index.Type())
+	}
+	hash.Pairs[hashKey.HashKey()] = object.HashPair{
+		Key:   index,
+		Value: value,
+	}
+	return hash
 }

@@ -217,7 +217,11 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.nextToken()
 
-	stmt.ReturnValue = p.parseExpression(LOWEST)
+	if p.curToken.Type != token.SEMICOLON && p.curToken.Type != token.RBRACE {
+		stmt.ReturnValue = p.parseExpression(LOWEST)
+	} else {
+		stmt.ReturnValue = nil
+	}
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -510,6 +514,17 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 		return nil
 	}
 
+	if p.peekToken.Type == token.ASSIGN {
+		p.nextToken()
+		p.nextToken()
+		value := p.parseExpression(LOWEST)
+		return &ast.SquareBracketAssignment{
+			Token: exp.Token,
+			Value: value,
+			Key:   exp.Index,
+			Left:  left,
+		}
+	}
 	return exp
 }
 

@@ -404,3 +404,32 @@ func (as *AssignmentExpression) String() string {
 
 	return out.String()
 }
+
+type SquareBracketAssignment struct {
+	Token token.Token // the [ token
+	Value Expression
+	Key   Expression
+	Left  Expression
+}
+
+func (as *SquareBracketAssignment) expressionNode()      {}
+func (as *SquareBracketAssignment) TokenLiteral() string { return as.Token.Literal }
+func (as *SquareBracketAssignment) String() string {
+	var out *bytes.Buffer
+
+	out.WriteString(as.Left.String())
+	out.WriteString("[")
+	out.WriteString(as.Key.String())
+	out.WriteString("] = ")
+	out.WriteString(as.Value.String())
+
+	return out.String()
+}
+
+type NullValueExpression struct{}
+
+func (nv *NullValueExpression) expressionNode()      {}
+func (nv *NullValueExpression) TokenLiteral() string { return "null" }
+func (nv *NullValueExpression) String() string {
+	return nv.TokenLiteral()
+}

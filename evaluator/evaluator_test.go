@@ -5,8 +5,35 @@ import (
 	"sonar/v2/lexer"
 	"sonar/v2/object"
 	"sonar/v2/parser"
+	"sonar/v2/utils"
 	"testing"
 )
+
+func TestDeleteMapKeyExpression(t *testing.T) {
+	input := `
+let m  = {1: 2}
+m - 1
+`
+	testEvalType[*object.Hash](t, testEval(input).Inspect(), "{}")
+}
+
+func TestSquareBracketAssignmentExpression(t *testing.T) {
+	input := "[1,2,3][0] = 4"
+	testEvalType[*object.Array](t, testEval(input).Inspect(), "[4, 2, 3]")
+
+	// an out-of-bounds index operation	returns error
+	input = "[1,2,3][9] = 4"
+	evaluated := testEval(input)
+	if _, ok := evaluated.(*object.Error); !ok {
+		t.Fatalf("expected evaluated to be ERROR, got=%T", evaluated)
+	}
+
+	input = `
+let m = {1: 1}
+m[1] = 10
+`
+	testEvalType[*object.Hash](t, testEval(input).Inspect(), `{1: 10}`)
+}
 
 func TestAssignmentExpression(t *testing.T) {
 	input := `
@@ -31,7 +58,7 @@ a = 2
 		{"a += 1", 1},
 		{"a -= 1", -1},
 		{"a *= 2", 0},
-		{"a /= 1", 0.0},
+		{"a /= 1", 0},
 	}
 
 	for _, tt := range tests {
@@ -110,11 +137,9 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"5 * 2 + 10", 20},
 		{"5 + 2 * 10", 25},
 		{"20 + 2 * -10", 0},
-		{"50 / 2 * 2 + 10", 60},
 		{"2 * (5 + 10)", 30},
 		{"3 * 3 * 3 + 10", 37},
 		{"3 * (3 * 3) + 10", 37},
-		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
 	}
 
 	for _, tt := range tests {
@@ -134,6 +159,8 @@ func TestEvalFloatExpression(t *testing.T) {
 		{"2.1 + 1", 3.1},
 		{"2.1 + 1.2", 3.3},
 		{"1 + 1.2", 2.2},
+		{"50 / 2 * 2 + 10.1", 60.1},
+		{"(5 + 10 * 2 + 15 / 3) * 2 + -10.1", 49.9},
 	}
 
 	for _, tt := range tests {
@@ -305,10 +332,6 @@ func TestErrorHandling(t *testing.T) {
 		{
 			"5; true + false; 5",
 			"unknown operator: BOOLEAN + BOOLEAN",
-		},
-		{
-			`"Hello" - "World"`,
-			"unknown operator: STRING - STRING",
 		},
 		{
 			"if (10 > 1) { true + false; }",
@@ -492,17 +515,8 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
-		{`puts("hello", "world!")`, nil},
-		{`first([1, 2, 3])`, 1},
-		{`first([])`, nil},
-		{`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
-		{`last([1, 2, 3])`, 3},
-		{`last([])`, nil},
-		{`last(1)`, "argument to `last` must be ARRAY, got INTEGER"},
-		{`rest([1, 2, 3])`, []int{2, 3}},
-		{`rest([])`, nil},
 		{`push([], 1)`, []int{1}},
-		{`push(1, 1)`, "argument to `push` must be ARRAY, got INTEGER"},
+		{`push(1, 1)`, "'array' argument to `push` must be ARRAY, got INTEGER"},
 	}
 
 	for _, tt := range tests {
@@ -744,6 +758,7 @@ func testEval(input string) object.Object {
 	p := parser.New(l)
 	program := p.ParseProgram()
 	env := object.NewEnvironment()
+	InitStdlib()
 
 	return Eval(program, env)
 }
@@ -797,4 +812,111 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 		return false
 	}
 	return true
+}
+
+func testEvalInteger(t *testing.T, input string, expected int) bool {
+	evaluated := testEval(input)
+	obj, ok := evaluated.(*object.Integer)
+	if !ok {
+		t.Errorf("expected evaluated to be INTEGER, got=%s", evaluated.Type())
+		return false
+	}
+	if obj.Value != int64(expected) {
+		t.Errorf("expected obj.Value to be %d, got=%d", expected, obj.Value)
+		return false
+	}
+	return true
+}
+
+func testEvalFloat(t *testing.T, input string, expected float64) bool {
+	evaluated := testEval(input)
+	obj, ok := evaluated.(*object.Float)
+	if !ok {
+		t.Errorf("expected evaluated to be FLOAT, got=%s", evaluated.Type())
+		return false
+	}
+	if obj.Value != expected {
+		t.Errorf("expected obj.Value to be %f, got=%f", expected, obj.Value)
+		return false
+	}
+	return true
+}
+
+func testEvalType[Type *object.Integer | *object.Float | *object.Boolean | *object.String | *object.Function | *object.Builtin | *object.Array | *object.Hash, Expected int | string | bool](t *testing.T, input string, expected Expected) bool {
+	evaluated := testEval(input)
+	_, ok := evaluated.(*object.Error)
+	if ok {
+		t.Errorf("expected evaluated to be T, got=%s(%+v)", evaluated.Type(), evaluated)
+		return false
+	}
+
+	if evaluated.Type() == object.INTEGER_OBJ {
+		return testEvalInteger(t, input, any(expected).(int))
+	}
+	if evaluated.Type() == object.FLOAT_OBJ {
+		return testEvalFloat(t, input, any(expected).(float64))
+	}
+
+	compareValue := any(expected).(string)
+	var passed bool
+
+	switch evaluated.Type() {
+	case object.BOOLEAN_OBJ:
+		b := any(evaluated).(*object.Boolean)
+		passed = b.Inspect() == compareValue
+
+	case object.STRING_OBJ:
+		s := any(evaluated).(*object.String)
+		passed = s.Inspect() == compareValue
+
+	case object.FUNCTION_OBJ:
+		compareValue = utils.StripWhitespace(compareValue)
+		f := any(evaluated).(*object.Function)
+		inspected := utils.StripWhitespace(f.Inspect())
+		passed = inspected == compareValue
+
+	case object.ARRAY_OBJ:
+		a := any(evaluated).(*object.Array)
+		passed = a.Inspect() == compareValue
+
+	case object.HASH_OBJ:
+		h := any(evaluated).(*object.Hash)
+		passed = h.Inspect() == compareValue
+	}
+
+	if !passed {
+		t.Fatalf("%s is not equal to %s", evaluated.Inspect(), compareValue)
+		return false
+	}
+	return true
+}
+
+func TestEvalArrayInfixExpression(t *testing.T) {
+	tests := []struct {
+		input         string
+		expectedValue string
+	}{
+		{"[1,2,3,4,5] + [6,7,8]", "[1, 2, 3, 4, 5, 6, 7, 8]"},
+		{"[1,2,3,4,5,6,7] / 2", "[[1, 2], [3, 4], [5, 6], [7]]"},
+		{"[1,2] - 0", "[2]"},
+		{"[1,2] * 2", "[[1, 2], [1, 2]]"},
+	}
+
+	for _, tt := range tests {
+		testEvalType[*object.Array](t, tt.input, tt.expectedValue)
+	}
+
+	tests = []struct {
+		input         string
+		expectedValue string
+	}{
+		{"[1] == [1]", "true"},
+		{"[1] == [2]", "false"},
+		{"[1] != [2]", "true"},
+		{"[1] != [1]", "false"},
+	}
+
+	for _, tt := range tests {
+		testEvalType[*object.Boolean](t, tt.input, tt.expectedValue)
+	}
 }

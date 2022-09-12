@@ -13,6 +13,8 @@ import (
 )
 
 func main() {
+	evaluator.InitStdlib()
+
 	args := os.Args[1:]
 	if len(args) == 0 {
 		repl.Start(os.Stdin, os.Stdout)

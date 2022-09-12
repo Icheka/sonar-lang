@@ -142,7 +142,7 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 func (l *Lexer) skipSingleLineComment() {
-	for l.ch != '\n' && l.ch != '0' {
+	for l.ch != '\n' && l.ch != byte(0) {
 		l.readChar()
 	}
 	l.skipWhitespace()
