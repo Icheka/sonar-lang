@@ -22,6 +22,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	// Statements
 	case *ast.Program:
+		if strings.Contains(fmt.Sprint(node.Statements), "invalid memory address") {
+			return NewError("Unhandled runtime error")
+		}
 		return evalProgram(node, env)
 
 	case *ast.BlockStatement:
