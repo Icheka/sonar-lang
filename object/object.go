@@ -140,6 +140,7 @@ func (s *String) HashKey() HashKey {
 
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
+func (s *String) FormattedInspect() string { return fmt.Sprintf("'%s'", s.Value) }
 
 type Builtin struct {
 	Fn BuiltinFunction
@@ -158,7 +159,11 @@ func (ao *Array) Inspect() string {
 
 	elements := []string{}
 	for _, e := range ao.Elements {
-		elements = append(elements, e.Inspect())
+		if e.Type() == STRING_OBJ {
+			elements = append(elements, e.(*String).FormattedInspect())
+		} else {
+			elements = append(elements, e.Inspect())
+		}
 	}
 
 	out.WriteString("[")
@@ -183,8 +188,22 @@ func (h *Hash) Inspect() string {
 
 	pairs := []string{}
 	for _, pair := range h.Pairs {
-		pairs = append(pairs, fmt.Sprintf("%s: %s",
-			pair.Key.Inspect(), pair.Value.Inspect()))
+		key := ""
+		value := ""
+
+		if pair.Key.Type() == STRING_OBJ {
+			key = pair.Key.(*String).FormattedInspect()
+		} else {
+			key = pair.Key.Inspect()
+		}
+
+		if pair.Value.Type() == STRING_OBJ {
+			value = pair.Value.(*String).FormattedInspect()
+		} else {
+			value = pair.Value.Inspect()
+		}
+
+		pairs = append(pairs, fmt.Sprintf("%s: %s", key, value))
 	}
 
 	out.WriteString("{")

@@ -734,8 +734,14 @@ func evalStringindexExpression(str, index object.Object) object.Object {
 	idx := index.(*object.Integer).Value
 	max := int64(len(strObject.Value))
 
-	if max == 0 || idx < 0 || idx > max {
-		return NULL
+	if len(strObject.Value) == 0 {
+		return NewError("cannot index string with length 0")
+	}
+
+	if idx > max {
+		return NewError("string index (%d) out of bounds", idx)
+	} else if idx < 0 {
+		idx = max + 1 + idx
 	}
 
 	return &object.String{
@@ -748,8 +754,14 @@ func evalArrayIndexExpression(array, index object.Object) object.Object {
 	idx := index.(*object.Integer).Value
 	max := int64(len(arrayObject.Elements) - 1)
 
-	if idx < 0 || idx > max {
-		return NULL
+	if len(arrayObject.Elements) == 0 {
+		return NewError("cannot index array with length 0")
+	}
+
+	if idx > max {
+		return NewError("array index (%d) out of bounds", idx)
+	} else if idx < 0 {
+		idx = max + 1 + idx
 	}
 
 	return arrayObject.Elements[idx]
