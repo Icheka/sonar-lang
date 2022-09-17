@@ -9,22 +9,25 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": &object.Builtin{Fn: func(args ...object.Object) object.Object {
-		if len(args) != 1 {
-			return NewError("wrong number of arguments. got=%d, want=1",
-				len(args))
-		}
+	"len": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return NewError("wrong number of arguments. got=%d, want=1",
+					len(args))
+			}
 
-		switch arg := args[0].(type) {
-		case *object.Array:
-			return &object.Integer{Value: int64(len(arg.Elements))}
-		case *object.String:
-			return &object.Integer{Value: int64(len(arg.Value))}
-		default:
-			return NewError("argument to `len` not supported, got %s",
-				args[0].Type())
-		}
-	},
+			switch arg := args[0].(type) {
+			case *object.Array:
+				return &object.Integer{Value: int64(len(arg.Elements))}
+			case *object.String:
+				return &object.Integer{Value: int64(len(arg.Value))}
+			case *object.Hash:
+				return &object.Integer{Value: int64(len(arg.Pairs))}
+			default:
+				return NewError("argument to `len` not supported, got %s",
+					args[0].Type())
+			}
+		},
 	},
 	"print": {
 		Fn: func(args ...object.Object) object.Object {
@@ -140,12 +143,10 @@ var builtins = map[string]*object.Builtin{
 				}
 
 			case object.ARRAY_OBJ:
-				arr := obj.(*object.Array)
-				return &object.Array{Elements: arr.Elements}
+				return &object.Array{Elements: obj.(*object.Array).Elements}
 
 			case object.HASH_OBJ:
-				hash := obj.(*object.Hash)
-				return &object.Hash{Pairs: hash.Pairs}
+				return &object.Hash{Pairs: obj.(*object.Hash).Pairs}
 
 			default:
 				return &object.Error{Message: fmt.Sprintf("Type %s cannot be copied", obj.Type())}
@@ -216,6 +217,7 @@ var builtins = map[string]*object.Builtin{
 func InitStdlib() {
 	var stdlibFunctions = []map[string]*object.Builtin{
 		ArrayBuiltins,
+		MapBuiltins,
 	}
 
 	for _, f := range stdlibFunctions {
