@@ -67,7 +67,7 @@ func checkArity(args []object.Object, expected int) (bool, *object.Error) {
 func arrayContains(obj *object.Array, elm object.Object) bool {
 	elements := obj.Elements
 	for _, v := range elements {
-		if v.Inspect() == elm.Inspect() {
+		if v.Inspect() == elm.Inspect() && v.Type() == elm.Type() {
 			return true
 		}
 	}
@@ -75,6 +75,5 @@ func arrayContains(obj *object.Array, elm object.Object) bool {
 }
 
 func stringContains(obj *object.String, elm object.Object) bool {
-	print(obj.Value, elm.Inspect())
 	return strings.Contains(obj.Value, elm.Inspect())
 }

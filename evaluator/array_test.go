@@ -5,6 +5,11 @@ import (
 	"testing"
 )
 
+func TestReverseBuiltin(t *testing.T) {
+	input := `reverse([1, 2, 3])`
+	testEvalType[*object.Array](t, input, `[3, 2, 1]`)
+}
+
 func TestPushBuiltin(t *testing.T) {
 	input := `let a = [1, 2, 3]; a = push(a, 4, 5); a;`
 	evaluated := testEval(input)
