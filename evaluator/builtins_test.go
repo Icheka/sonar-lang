@@ -42,7 +42,7 @@ func TestSliceBuiltin(t *testing.T) {
 	evaluated = testEval(input)
 	arr, ok := evaluated.(*object.Array)
 	if !ok {
-		t.Fatalf("expected evaluated to be object.Array, got=%s", evaluated.Type())
+		t.Fatalf("expected evaluated to be object.Array, got=%s(%+v)", evaluated.Type(), evaluated)
 	}
 	if len(arr.Elements) != 3 {
 		t.Fatalf("expected arr.Elements to be 3, got=%d", len(arr.Elements))
