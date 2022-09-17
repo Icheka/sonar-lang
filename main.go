@@ -35,9 +35,8 @@ func main() {
 			p := parser.New(lexer.New(source))
 			program := p.ParseProgram()
 			if len(p.Errors()) != 0 {
-				for _, err := range p.Errors() {
-					fmt.Printf("%s\n", err)
-				}
+				repl.PrintParserErrors(os.Stderr, p.Errors())
+				return
 			}
 			if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated.Type() == object.ERROR_OBJ {
 				fmt.Println(evaluated.Inspect())

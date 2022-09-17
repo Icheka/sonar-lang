@@ -596,7 +596,7 @@ func (p *Parser) parseAssignmentExpression(left ast.Expression) ast.Expression {
 	exp := &ast.AssignmentExpression{Token: p.curToken}
 	identifier, ok := left.(*ast.Identifier)
 	if !ok {
-		p.errors = append(p.errors, "Expected identifier in assignment expression, got %s", left.TokenLiteral())
+		p.errors = append(p.errors, fmt.Sprintf("Expected identifier in assignment expression, got %s", left.TokenLiteral()))
 	}
 
 	exp.Identifier = identifier
