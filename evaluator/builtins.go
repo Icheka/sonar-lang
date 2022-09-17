@@ -1,9 +1,11 @@
 package evaluator
 
 import (
+	"bytes"
 	"fmt"
 	"sonar/v2/object"
 	"sonar/v2/utils"
+	"strings"
 )
 
 var builtins = map[string]*object.Builtin{
@@ -61,45 +63,25 @@ var builtins = map[string]*object.Builtin{
 
 			switch obj.Type() {
 			case object.ARRAY_OBJ:
-				if len(args) == 1 {
-					return &object.Array{Elements: obj.(*object.Array).Elements}
+				return SliceArray(args...)
+			case object.STRING_OBJ:
+				arr := strings.Split(obj.(*object.String).Value, "")
+				objs := []object.Object{}
+				for _, v := range arr {
+					objs = append(objs, &object.String{Value: v})
+				}
+				args[0] = &object.Array{Elements: objs}
+				// newArr := SliceArray(&object.Array{Elements: objs}, args[])
+				newArr := SliceArray(args...)
+				if newArr.Type() == object.ERROR_OBJ {
+					return newArr
+				}
+				var strs bytes.Buffer
+				for _, v := range newArr.(*object.Array).Elements {
+					strs.WriteString(v.(*object.String).Value)
 				}
 
-				for i, arg := range args[1:] {
-					if arg.Type() != object.INTEGER_OBJ {
-						return NewError("ordinal argument to `slice` at index %d must be INTEGER, %s given", i, arg.Type())
-					}
-				}
-				start := int(args[1].(*object.Integer).Value)
-				originalArray := obj.(*object.Array).Elements
-				if start < 0 {
-					start = len(originalArray) + start
-				}
-				if len(args) == 2 {
-					return &object.Array{Elements: originalArray[start:]}
-				}
-
-				end := int(args[2].(*object.Integer).Value)
-				if end < 0 {
-					end = len(originalArray) + end
-				}
-
-				newArray := []object.Object{}
-				if len(args) == 3 {
-					newArray = originalArray[start:end]
-				} else {
-					step := int(args[3].(*object.Integer).Value)
-					if step < 0 {
-						step = len(originalArray) + step
-					}
-					for k, v := range originalArray {
-						if k%step == 0 {
-							newArray = append(newArray, v)
-						}
-					}
-				}
-
-				return &object.Array{Elements: newArray}
+				return &object.String{Value: strs.String()}
 			default:
 				return &object.Array{Elements: []object.Object{}}
 			}
@@ -108,7 +90,7 @@ var builtins = map[string]*object.Builtin{
 	"contains": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
-				return NewError("`contains` requires at 2 arguments, got=%d", len(args))
+				return NewError("`contains` requires 2 arguments, got=%d", len(args))
 			}
 			obj := args[0]
 			elm := args[1]
@@ -183,15 +165,13 @@ var builtins = map[string]*object.Builtin{
 
 			switch args[0].Type() {
 			case object.ARRAY_OBJ:
-				obj := args[0].(*object.Array)
-				elements := obj.Elements
-				subject := args[1].Inspect()
-				for i, v := range elements {
-					if v.Inspect() == subject {
-						return &object.Integer{Value: int64(i)}
-					}
+				return ArrayIndexOf(args[0].(*object.Array), args[1])
+			case object.STRING_OBJ:
+				elements := []object.Object{}
+				for _, v := range strings.Split(args[0].(*object.String).Value, "") {
+					elements = append(elements, &object.String{Value: v})
 				}
-				return &object.Integer{Value: -1}
+				return ArrayIndexOf(&object.Array{Elements: elements}, args[1])
 
 			default:
 				return NewError("type of argument 1 to index() must be ARRAY or STRING")
@@ -205,11 +185,24 @@ var builtins = map[string]*object.Builtin{
 			}
 			switch args[0].Type() {
 			case object.ARRAY_OBJ:
-				arr := args[0].(*object.Array)
-				return utils.SortObjectArray(arr)
+				return utils.SortObjectArray(args[0].(*object.Array))
 
 			default:
 				return NewError("argument to sort() must be of type ARRAY")
+			}
+		},
+	},
+	"reverse": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return &object.Error{Message: fmt.Sprintf("reverse() takes 1 argument, %d given", len(args))}
+			}
+			switch args[0].Type() {
+			case object.ARRAY_OBJ:
+				return &object.Array{Elements: utils.ReverseSlice(args[0].(*object.Array).Elements)}
+
+			default:
+				return NewError("argument to reverse() must be of type ARRAY")
 			}
 		},
 	},
@@ -225,4 +218,70 @@ func InitStdlib() {
 			builtins[k] = v
 		}
 	}
+}
+
+func ArrayIndexOf(arr *object.Array, element object.Object) *object.Integer {
+	elements := arr.Elements
+	for i, v := range elements {
+		if v.Inspect() == element.Inspect() && v.Type() == element.Type() {
+			return &object.Integer{Value: int64(i)}
+		}
+	}
+	return &object.Integer{Value: -1}
+}
+
+func SliceArray(args ...object.Object) object.Object {
+	obj := args[0]
+	if len(args) == 1 {
+		return &object.Array{Elements: obj.(*object.Array).Elements}
+	}
+
+	for i, arg := range args[1:] {
+		if arg.Type() != object.INTEGER_OBJ {
+			return NewError("ordinal argument to `slice` at index %d must be INTEGER, %s given", i, arg.Type())
+		}
+	}
+	start := int(args[1].(*object.Integer).Value)
+	originalArray := obj.(*object.Array).Elements
+	if start >= len(originalArray) {
+		return NewError("'start' argument out of bounds")
+	}
+	if start < 0 {
+		start = len(originalArray) + start
+	}
+	if len(args) == 2 {
+		return &object.Array{Elements: originalArray[start:]}
+	}
+
+	end := int(args[2].(*object.Integer).Value)
+	if end > len(originalArray) {
+		return NewError("'end' argument out of bounds")
+	}
+	if end < 0 {
+		end = len(originalArray) + end
+	}
+	if end < start {
+		return NewError("invalid range %d:%d", start, end)
+	}
+
+	slicedArr := originalArray[start:end]
+	newArray := []object.Object{}
+
+	if len(args) == 3 {
+		newArray = slicedArr
+	} else {
+		step := int(args[3].(*object.Integer).Value)
+		if step < 0 {
+			step = len(originalArray) + step
+		}
+		for k, v := range slicedArr {
+			if k >= end {
+				break
+			} else if k%step == 0 {
+				newArray = append(newArray, v)
+			}
+		}
+	}
+
+	return &object.Array{Elements: newArray}
 }

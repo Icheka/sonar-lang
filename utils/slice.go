@@ -41,28 +41,13 @@ func SliceChunkAsArrayObject(arr *object.Array, size int) *object.Array {
 }
 
 func SortObjectArray(arr *object.Array) *object.Array {
-	elementsMap := map[int]object.Object{}
-	elementsSlice := []string{}
+	elements := make([]object.Object, len(arr.Elements))
+	copy(elements, arr.Elements)
 
-	for i, v := range arr.Elements {
-		elementsMap[i] = v
-		elementsSlice = append(elementsSlice, v.Inspect())
-	}
-
-	sort.Slice(elementsSlice, func(i, j int) bool {
-		return elementsSlice[i] < elementsSlice[j]
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].Inspect() < elements[j].Inspect()
 	})
-
-	sortedElements := []object.Object{}
-	for _, v := range elementsSlice {
-		for _, mapV := range elementsMap {
-			if mapV.Inspect() == v {
-				sortedElements = append(sortedElements, mapV)
-			}
-		}
-	}
-
-	return &object.Array{Elements: sortedElements}
+	return &object.Array{Elements: elements}
 }
 
 func SortObjectArrayWithFunction(arr *object.Array) [][]object.Object {
@@ -93,14 +78,28 @@ func SortObjectArrayWithFunction(arr *object.Array) [][]object.Object {
 }
 
 func ObjectArrayEqual(arr1, arr2 *object.Array) bool {
+	len1 := len(arr1.Elements)
+	len2 := len(arr2.Elements)
+	if len1 != len2 {
+		return false
+	}
+
 	for i, v := range arr1.Elements {
-		if i == len(arr2.Elements) {
+		elm := arr2.Elements[i]
+		if elm.Type() != v.Type() || elm.Inspect() != v.Inspect() {
 			return false
 		}
-		elm := arr2.Elements[i]
-		if elm.Type() == v.Type() && elm.Inspect() == v.Inspect() {
-			return true
-		}
 	}
-	return false
+	return true
+}
+
+func ReverseSlice[T ~[]E, E any](arr T) T {
+	S := make(T, len(arr))
+	copy(S, arr)
+
+	for i, j := 0, len(arr)-1; i < j; i, j = i+1, j-1 {
+		S[i], S[j] = S[j], S[i]
+	}
+
+	return S
 }

@@ -574,8 +574,8 @@ func evalArrayInfixExpression(operator string, left, right object.Object) object
 			}
 
 		case token.MINUS:
-			if int(rightVal) > len(leftVal) {
-				return NewError("unacceptable value on right side of array infix operation: right side %d is greater than length of array", len(leftVal))
+			if int(rightVal) >= len(leftVal) {
+				return NewError("unacceptable value on right side of array infix operation: right side %d is greater/equal to length of array", len(leftVal))
 			}
 			newArr := append(leftVal[0:rightVal], leftVal[rightVal+1:]...)
 			return &object.Array{Elements: newArr}
@@ -693,7 +693,11 @@ func extendFunctionEnv(
 	env := object.NewEnclosedEnvironment(fn.Env)
 
 	for paramIdx, param := range fn.Parameters {
-		env.Set(param.Value, args[paramIdx])
+		if paramIdx < len(args) {
+			env.Set(param.Value, args[paramIdx])
+		} else {
+			env.Set(param.Value, &object.Null{})
+		}
 	}
 
 	return env

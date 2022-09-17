@@ -39,10 +39,9 @@ func main() {
 					fmt.Printf("%s\n", err)
 				}
 			}
-			if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated != nil {
-				fmt.Printf("%s\n", evaluated.Inspect())
+			if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated.Type() == object.ERROR_OBJ {
+				fmt.Println(evaluated.Inspect())
 			}
-
 			return
 		}
 	}
