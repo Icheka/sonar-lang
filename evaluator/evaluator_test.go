@@ -620,7 +620,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 		},
 		{
 			"[1, 2, 3][-1]",
-			nil,
+			3,
 		},
 	}
 
@@ -630,7 +630,9 @@ func TestArrayIndexExpressions(t *testing.T) {
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
 		} else {
-			testNullObject(t, evaluated)
+			if _, ok := evaluated.(*object.Error); !ok {
+				t.Fatalf("expected evaluated to be object.Error, got %T", evaluated)
+			}
 		}
 	}
 }

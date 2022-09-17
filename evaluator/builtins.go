@@ -28,10 +28,15 @@ var builtins = map[string]*object.Builtin{
 	},
 	"print": {
 		Fn: func(args ...object.Object) object.Object {
+			arr := []string{}
 			for _, arg := range args {
-				fmt.Printf("%s ", arg.Inspect())
+				if arg.Type() == object.STRING_OBJ {
+					arr = append(arr, arg.(*object.String).FormattedInspect())
+				} else {
+					arr = append(arr, arg.Inspect())
+				}
 			}
-			fmt.Printf("\n")
+			fmt.Println(strings.Join(arr, ", "))
 
 			return NULL
 		},
