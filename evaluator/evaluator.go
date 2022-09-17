@@ -83,8 +83,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 				return result
 			}
 		}
-		env.Set(node.Identifier.Value, result)
-		return &object.Null{}
+		return env.Set(node.Identifier.Value, result)
 
 	case *ast.WhileStatement:
 		return evalWhileStatement(node, env)
