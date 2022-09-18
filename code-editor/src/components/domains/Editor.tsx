@@ -1,16 +1,18 @@
 import 'prismjs/themes/prism.css';
 
 import { highlight, languages } from 'prismjs';
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { FunctionComponent } from 'react';
 import EditorCore from 'react-simple-code-editor';
+
+import { useEditor } from '../../context';
 
 export const Editor: FunctionComponent = () => {
     // vars
     const textAreaClassName = 'editor-core-textarea';
+    const { code, setCode } = useEditor();
 
     // state
-    const [code, setCode] = useState('');
     const [domPainted, setDomPainted] = useState(false);
 
     // hooks
@@ -35,7 +37,7 @@ export const Editor: FunctionComponent = () => {
 
     return (
         <>
-            <div onClick={selectTextarea} className="bg-red-200 w-full h-full overflow-y-auto">
+            <div onClick={selectTextarea} className="bg-red-200 w-full h-full overflow-y-auto border-2 border-red-500">
                 <section className='overflow-y-auto flex'>
                     <pre className='bg-blue-200 text-xs leading-[18px] pt-[11px] pb-4 px-2 opacity-50'>{lineNumbers}</pre>
                     <div className='w-full'>
