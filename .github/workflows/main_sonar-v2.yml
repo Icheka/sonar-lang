@@ -1,0 +1,26 @@
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: Build
+        # run: go build -v ./...
+        run: bash devops/builds.sh
+
+      - name: Test
+        # run: go test -v ./...
+        run: bash devops/tests.sh
