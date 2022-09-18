@@ -6,7 +6,7 @@ import (
 )
 
 func TestReverseBuiltin(t *testing.T) {
-	input := `reverse([1, 2, 3])`
+	input := `reverse([1, 2, 33])`
 	testEvalType[*object.Array](t, input, `[3, 2, 1]`)
 }
 
