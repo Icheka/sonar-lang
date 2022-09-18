@@ -159,7 +159,7 @@ func TestCopyBuiltin(t *testing.T) {
 	testEvalFloat(t, `copy(1.1);`, 1.1)
 	testEvalType[*object.Boolean](t, `copy(true)`, "true")
 	testEvalType[*object.String](t, `copy("Icheka")`, "Icheka")
-	testEvalType[*object.Function](t, `copy(fn() { return 1 })`, "fn() { return 1; }")
+	testEvalType[*object.Function](t, `copy(func() { return 1 })`, "func() { return 1; }")
 	testEvalType[*object.Array](t, `copy([1,2,3])`, "[1, 2, 3]")
 	testEvalType[*object.Hash](t, `copy({1:1})`, "{1: 1}")
 }
