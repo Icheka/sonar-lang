@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/icheka/sonar-lang/ast"
-	"github.com/icheka/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/ast"
+	"github.com/icheka/sonar-lang/sonar-lang/lexer"
 )
 
 func TestArraySquareBracketAssignmentExpression(t *testing.T) {

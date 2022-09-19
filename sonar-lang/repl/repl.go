@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/icheka/sonar-lang/evaluator"
-	"github.com/icheka/sonar-lang/lexer"
-	"github.com/icheka/sonar-lang/object"
-	"github.com/icheka/sonar-lang/parser"
+	"github.com/icheka/sonar-lang/sonar-lang/evaluator"
+	"github.com/icheka/sonar-lang/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/parser"
 )
 
 const PROMPT = ">> "

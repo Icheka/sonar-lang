@@ -1,6 +1,6 @@
 package evaluator
 
-import "github.com/icheka/sonar-lang/object"
+import "github.com/icheka/sonar-lang/sonar-lang/object"
 
 var MapBuiltins = map[string]*object.Builtin{
 	"mapKeys": {

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/icheka/sonar-lang/ast"
-	"github.com/icheka/sonar-lang/object"
-	"github.com/icheka/sonar-lang/token"
-	"github.com/icheka/sonar-lang/utils"
+	"github.com/icheka/sonar-lang/sonar-lang/ast"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
+	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
 
 var (

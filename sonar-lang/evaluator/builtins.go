@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/icheka/sonar-lang/object"
-	"github.com/icheka/sonar-lang/utils"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
 
 var builtins = map[string]*object.Builtin{

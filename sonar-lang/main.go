@@ -5,12 +5,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/icheka/sonar-lang/evaluator"
-	"github.com/icheka/sonar-lang/inputs"
-	"github.com/icheka/sonar-lang/lexer"
-	"github.com/icheka/sonar-lang/object"
-	"github.com/icheka/sonar-lang/parser"
-	"github.com/icheka/sonar-lang/repl"
+	"github.com/icheka/sonar-lang/sonar-lang/evaluator"
+	"github.com/icheka/sonar-lang/sonar-lang/inputs"
+	"github.com/icheka/sonar-lang/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/parser"
+	"github.com/icheka/sonar-lang/sonar-lang/repl"
 )
 
 func main() {
