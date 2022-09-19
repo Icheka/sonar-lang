@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/icheka/sonar-lang/lexer"
-	"github.com/icheka/sonar-lang/object"
-	"github.com/icheka/sonar-lang/parser"
-	"github.com/icheka/sonar-lang/utils"
+	"github.com/icheka/sonar-lang/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/parser"
+	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
 
 func TestDeleteMapKeyExpression(t *testing.T) {

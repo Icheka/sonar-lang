@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/icheka/sonar-lang/ast"
-	"github.com/icheka/sonar-lang/lexer"
-	"github.com/icheka/sonar-lang/token"
+	"github.com/icheka/sonar-lang/sonar-lang/ast"
+	"github.com/icheka/sonar-lang/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
 const (

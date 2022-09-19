@@ -3,7 +3,7 @@ package ast
 import (
 	"testing"
 
-	"github.com/icheka/sonar-lang/token"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
 func TestString(t *testing.T) {

@@ -3,7 +3,7 @@ package evaluator
 import (
 	"testing"
 
-	"github.com/icheka/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
 func TestMapEntriesBuiltin(t *testing.T) {

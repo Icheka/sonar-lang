@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/icheka/sonar-lang/token"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
 // The base Node interface

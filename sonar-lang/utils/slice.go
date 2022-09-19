@@ -3,7 +3,7 @@ package utils
 import (
 	"sort"
 
-	"github.com/icheka/sonar-lang/object"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
 func SliceContains[T comparable](slice []T, elm T) bool {

@@ -6,7 +6,7 @@ import (
 	"hash/fnv"
 	"strings"
 
-	"github.com/icheka/sonar-lang/ast"
+	"github.com/icheka/sonar-lang/sonar-lang/ast"
 )
 
 type BuiltinFunction func(args ...Object) Object

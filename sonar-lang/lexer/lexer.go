@@ -3,7 +3,7 @@ package lexer
 import (
 	"strings"
 
-	"github.com/icheka/sonar-lang/token"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
 type Lexer struct {
