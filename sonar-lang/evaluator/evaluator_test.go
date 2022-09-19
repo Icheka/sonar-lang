@@ -92,12 +92,39 @@ i
 func TestForStatement(t *testing.T) {
 	input := `
 let j = 0
-for (i in [0, 1]) {
-	j = i
+for (i, v in [0, 2]) {
+	j = 1
 }
 j
 `
 	testIntegerObject(t, testEval(input), 1)
+
+	input = `
+let j = 0
+for (i, v in "Icheka") {
+	j = v
+}
+j
+`
+	testStringObject(t, testEval(input), "a")
+
+	input = `
+let j = 0
+for (k, v in {"name": "Icheka"}) {
+	j = k
+}
+j
+`
+	testStringObject(t, testEval(input), "name")
+
+	input = `
+let j = 0
+for (k, v in {"name": "Icheka"}) {
+	j = v
+}
+j
+`
+	testStringObject(t, testEval(input), "Icheka")
 }
 
 func TestEvalInfixExpression(t *testing.T) {

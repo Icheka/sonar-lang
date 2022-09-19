@@ -6,11 +6,12 @@ import (
 
 	"github.com/icheka/sonar-lang/sonar-lang/ast"
 	"github.com/icheka/sonar-lang/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
 func TestForLoopStatement(t *testing.T) {
 	input := `
-for (x in y) {
+for (i, v in y) {
 	x
 }
 `
@@ -30,8 +31,17 @@ for (x in y) {
 			program.Statements[0])
 	}
 
-	if !testInfixExpression(t, stmt.Condition, "x", "in", "y") {
-		return
+	if stmt.Counter.String() != "i" {
+		t.Errorf("expected stmt.Counter to be 'i', got=%s", stmt.Counter.String())
+	}
+	if stmt.Value.String() != "v" {
+		t.Errorf("expected stmt.Value to be 'v', got=%s", stmt.Value.String())
+	}
+	if stmt.Operator.Type != token.IN {
+		t.Errorf("expected stmt.Operator to be 'in', got=%s", stmt.Operator.Literal)
+	}
+	if stmt.Iterable.String() != "y" {
+		t.Errorf("expected stmt.Iterable to be 'y', got=%s", stmt.Iterable.String())
 	}
 
 	if len(stmt.Consequence.Statements) != 1 {

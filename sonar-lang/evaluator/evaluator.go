@@ -287,19 +287,36 @@ func evalForStatement(fs *ast.ForStatement, env *object.Environment) object.Obje
 	}
 	scope := object.NewEphemeralScope(allowed, readonly, env)
 
-	for _, v := range iters {
+	for i, v := range iters {
 		// allow the counter to be mutated only to allow setting counter to iter
 		scope.Readonly = make(map[string]bool)
 
 		// set 'counter' to current iter
-		val := scope.Set(fs.Counter.String(), v)
-		if isError(val) {
-			return val
+		if iterable.(object.Object).Type() == object.HASH_OBJ {
+			arr := v.(*object.Array).Elements
+			val := scope.Set(fs.Counter.String(), &object.String{Value: arr[0].Inspect()})
+			if isError(val) {
+				return val
+			}
+			val = scope.Set(fs.Value.String(), &object.String{Value: arr[1].Inspect()})
+			if isError(val) {
+				return val
+			}
+		} else {
+			val := scope.Set(fs.Counter.String(), &object.Integer{Value: int64(i)})
+			if isError(val) {
+				return val
+			}
+			val = scope.Set(fs.Value.String(), v)
+			if isError(val) {
+				return val
+			}
 		}
 
 		// make the counter a constant to make it immutable until this iteration concludes
 		scope.Readonly = map[string]bool{
 			(fs.Counter.String()): true,
+			(fs.Value.String()):   true,
 		}
 
 		result := Eval(fs.Consequence, scope)

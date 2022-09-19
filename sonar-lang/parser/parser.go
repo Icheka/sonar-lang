@@ -612,10 +612,19 @@ func (p *Parser) parseForStatement() ast.Statement {
 	}
 	stmt.Counter = p.parseIdentifier()
 
+	if !p.expectPeek(token.COMMA) {
+		return nil
+	}
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+	stmt.Value = p.parseIdentifier()
+
 	if !p.expectPeek(token.IN) {
 		return nil
 	}
-	p.nextToken()
+	stmt.Operator = p.curToken
+	p.nextToken() // advance to iterable part
 
 	stmt.Iterable = p.parseExpression(LOWEST)
 	if stmt.Iterable == nil {

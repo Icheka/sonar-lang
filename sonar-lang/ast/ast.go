@@ -147,9 +147,10 @@ func (ws *WhileStatement) String() string {
 
 type ForStatement struct {
 	Token       token.Token // the 'for' token
-	Counter     Node        // the 'i' in 'for (i in [0, 1])'
+	Counter     Node        // the 'i' in 'for (i, v in [0, 1])'
+	Value       Node        // the 'v' part in 'for (i, v in [0, 1])'
+	Operator    token.Token // the infix operator used. For now, and maybe forever, it will always be 'in'
 	Iterable    Expression
-	Condition   Expression
 	Consequence *BlockStatement
 }
 
@@ -160,7 +161,11 @@ func (fs *ForStatement) String() string {
 
 	out.WriteString(fs.TokenLiteral())
 	out.WriteString(" (")
-	out.WriteString(fs.Condition.String())
+	out.WriteString(fs.Counter.String())
+	out.WriteString(", ")
+	out.WriteString(fs.Value.String())
+	out.WriteString(" in ")
+	out.WriteString(fs.Iterable.String())
 	out.WriteString(" ) {")
 	out.WriteString(fs.Consequence.String())
 	out.WriteString("}")
