@@ -2,6 +2,9 @@
 
 . "$PWD"/devops/utils.sh
 
+# install sonar-lang
+. "$PWD"/devops/install/mac.sh
+
 # test sonar-lang
 cd sonar-lang || exit 1
 go test -v ./...
