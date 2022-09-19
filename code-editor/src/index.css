@@ -15,3 +15,24 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.editor-core-textarea {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding-left: 20px;
+}
+
+.editor-core {
+    counter-reset: line;
+    padding-left: 20px;
+}
+
+.editor-line-number::before {
+    counter-increment: line;
+    content: counter(line);
+    position: relative;
+    margin-right: 10px;
+    opacity: .3;
+    user-select: none;
+}
