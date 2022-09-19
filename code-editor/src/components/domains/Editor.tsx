@@ -37,7 +37,7 @@ export const Editor: FunctionComponent = () => {
 
     return (
         <>
-            <div onClick={selectTextarea} className="bg-red-200 w-full h-full overflow-y-auto border-2 border-red-500">
+            <div onClick={selectTextarea} className="bg-red-200 w-full h-full overflow-y-auto border-b border-red-500 border-t">
                 <section className='overflow-y-auto flex'>
                     <pre className='bg-blue-200 text-xs leading-[18px] pt-[11px] pb-4 px-2 opacity-50'>{lineNumbers}</pre>
                     <div className='w-full'>

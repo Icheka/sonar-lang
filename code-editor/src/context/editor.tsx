@@ -24,6 +24,7 @@ const events = {
     evaluate: 'evaluate',
     stderr: 'stderr',
     stdout: 'stdout',
+    ping: 'ping',
 }
 export type SocketReqRes = {
     type: keyof typeof events;
@@ -38,9 +39,8 @@ export const EditorContextProvider: FunctionComponent<{children: any}> = ({child
     const [connected, setConnected] = useState(false);
 
     // utils
+    const connOpen = () => socket.readyState === socket.OPEN;
     const emit = (payload: SocketReqRes) => {
-        const connOpen = () => socket && Object.hasOwn(socket, "readyState") && socket.readyState !== socket.OPEN;
-
         if (!connOpen()) {
             socket = wsConnect();
         }
@@ -49,19 +49,24 @@ export const EditorContextProvider: FunctionComponent<{children: any}> = ({child
                 clearInterval(interval);
                 socket.send(JSON.stringify(payload));
             }
-        }, 1000);
+        }, 2000);
     }
     const evaluateCode = () => {
-        console.log("Emitting 'evaluate'");
         emit({
             type: 'evaluate',
             data: code
         });
     }
+    const clearStd = () => {
+        setStderr("");
+        setStdout("");
+    }
     const handleStdErr = (data: string) => {
+        clearStd();
         setStderr(data);
     }
     const handleStdOut = (data: string) => {
+        clearStd();
         setStdout(data);
     }
 
@@ -75,11 +80,17 @@ export const EditorContextProvider: FunctionComponent<{children: any}> = ({child
     }), [code, stderr, stdout]);
 
     useEffect(() => {
+        socket = wsConnect();
+
         socket.onopen = () => {
             console.log('Connected.');
-            socket.send(JSON.stringify({type: 'connect'}));
             setConnected(true);
+
+            setInterval(() => {
+                socket.send(JSON.stringify({type: "ping"}));
+            }, 50000);
         }
+
         socket.onmessage = e => {
             const data = JSON.parse(e.data) as SocketReqRes;
             switch (data.type) {
@@ -96,7 +107,7 @@ export const EditorContextProvider: FunctionComponent<{children: any}> = ({child
         return () => {
             socket.close();
         }
-    }, []);
+    }, [connOpen()]);
 
     return (
         <EditorContext.Provider value={value}>
