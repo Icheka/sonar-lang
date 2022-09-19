@@ -1,7 +1,7 @@
 import 'prismjs/themes/prism.css';
 
 import { highlight, languages } from 'prismjs';
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { FunctionComponent } from 'react';
 import EditorCore from 'react-simple-code-editor';
 
@@ -58,7 +58,7 @@ export const Editor: FunctionComponent = () => {
                         />
                     </div>
                 </section>
-            </div>  
+            </div>
         </>
     );
 }
