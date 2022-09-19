@@ -44,8 +44,6 @@ func HandleWebSocket(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		log.Printf("%+v", msg)
-
 		switch msg.Type {
 		case "evaluate":
 			source := fmt.Sprint(msg.Data)
