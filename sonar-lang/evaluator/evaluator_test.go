@@ -89,6 +89,17 @@ i
 	testIntegerObject(t, testEval(input), 3)
 }
 
+func TestForStatement(t *testing.T) {
+	input := `
+let j = 0
+for (i in [0, 1]) {
+	j = i
+}
+j
+`
+	testIntegerObject(t, testEval(input), 1)
+}
+
 func TestEvalInfixExpression(t *testing.T) {
 	tests := []struct {
 		input    string

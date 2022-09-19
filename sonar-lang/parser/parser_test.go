@@ -8,6 +8,48 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/lexer"
 )
 
+func TestForLoopStatement(t *testing.T) {
+	input := `
+for (x in y) {
+	x
+}
+`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Body does not contain %d statements. got=%d\n",
+			1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ForStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ForStatement. got=%T",
+			program.Statements[0])
+	}
+
+	if !testInfixExpression(t, stmt.Condition, "x", "in", "y") {
+		return
+	}
+
+	if len(stmt.Consequence.Statements) != 1 {
+		t.Errorf("consequence is not 1 statement. got=%d\n",
+			len(stmt.Consequence.Statements))
+	}
+
+	consequence, ok := stmt.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
+			stmt.Consequence.Statements[0])
+	}
+
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
+	}
+}
+
 func TestArraySquareBracketAssignmentExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -350,6 +392,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"true != false", true, "!=", false},
 		{"false == false", false, "==", false},
 		{"5 <= 3", 5, "<=", 3},
+		{"x in y", "x", "in", "y"},
 	}
 
 	for _, tt := range infixTests {

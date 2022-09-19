@@ -12,14 +12,15 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	IN
 	CONNECTIVE  // and/or
 	ASSIGN      // =, +=, -=, *=, /=
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
 	PRODUCT     // *
-	PREFIX      // -X or !X
-	CALL        // myFunction(X)
+	PREFIX      // -x or !x
+	CALL        // myFunction(x)
 	INDEX       // array[index]
 )
 
@@ -43,6 +44,8 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK:        PRODUCT,
 	token.ASTERISK_ASSIGN: PRODUCT,
 	token.SLASH_ASSIGN:    PRODUCT,
+
+	token.IN: IN,
 
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
@@ -101,6 +104,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GTE, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.OR, p.parseInfixExpression)
+	p.registerInfix(token.IN, p.parseInfixExpression)
 
 	p.registerInfix(token.ASSIGN, p.parseAssignmentExpression)
 	p.registerInfix(token.PLUS_ASSIGN, p.parseAssignmentExpression)
@@ -182,6 +186,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLetStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.FOR:
+		return p.parseForStatement()
 	case token.WHILE:
 		return p.parseWhileStatement()
 	default:
@@ -589,6 +595,46 @@ func (p *Parser) parseWhileStatement() ast.Statement {
 	}
 
 	stmt.Consequence = p.parseBlockStatement()
+
+	return stmt
+}
+
+func (p *Parser) parseForStatement() ast.Statement {
+	stmt := &ast.ForStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken() // advance to token immediately after '('
+	if !p.curTokenIs(token.IDENT) {
+		return nil
+	}
+	stmt.Counter = p.parseIdentifier()
+
+	if !p.expectPeek(token.IN) {
+		return nil
+	}
+	p.nextToken()
+
+	stmt.Iterable = p.parseExpression(LOWEST)
+	if stmt.Iterable == nil {
+		return nil
+	}
+
+	// stmt.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	stmt.Consequence = p.parseBlockStatement()
+	if len(stmt.Consequence.Statements) == 0 {
+		return nil
+	}
 
 	return stmt
 }
