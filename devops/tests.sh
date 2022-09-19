@@ -20,6 +20,7 @@ cd ..
 # test code-editor
 cd code-editor || exit 1
 export CI=true
+npm install
 npm run test
 test_exit_code
 cd ..
