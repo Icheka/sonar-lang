@@ -43,6 +43,8 @@ while
 -=
 *=
 /=
+for
+in
 |
 `
 
@@ -149,6 +151,8 @@ while
 		{token.MINUS_ASSIGN, "-="},
 		{token.ASTERISK_ASSIGN, "*="},
 		{token.SLASH_ASSIGN, "/="},
+		{token.FOR, "for"},
+		{token.IN, "in"},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}

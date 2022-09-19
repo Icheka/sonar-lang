@@ -6,7 +6,59 @@ import (
 
 	"github.com/icheka/sonar-lang/sonar-lang/ast"
 	"github.com/icheka/sonar-lang/sonar-lang/lexer"
+	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
+
+func TestForLoopStatement(t *testing.T) {
+	input := `
+for (i, v in y) {
+	x
+}
+`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Body does not contain %d statements. got=%d\n",
+			1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ForStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ForStatement. got=%T",
+			program.Statements[0])
+	}
+
+	if stmt.Counter.String() != "i" {
+		t.Errorf("expected stmt.Counter to be 'i', got=%s", stmt.Counter.String())
+	}
+	if stmt.Value.String() != "v" {
+		t.Errorf("expected stmt.Value to be 'v', got=%s", stmt.Value.String())
+	}
+	if stmt.Operator.Type != token.IN {
+		t.Errorf("expected stmt.Operator to be 'in', got=%s", stmt.Operator.Literal)
+	}
+	if stmt.Iterable.String() != "y" {
+		t.Errorf("expected stmt.Iterable to be 'y', got=%s", stmt.Iterable.String())
+	}
+
+	if len(stmt.Consequence.Statements) != 1 {
+		t.Errorf("consequence is not 1 statement. got=%d\n",
+			len(stmt.Consequence.Statements))
+	}
+
+	consequence, ok := stmt.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
+			stmt.Consequence.Statements[0])
+	}
+
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
+	}
+}
 
 func TestArraySquareBracketAssignmentExpression(t *testing.T) {
 	tests := []struct {
@@ -350,6 +402,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"true != false", true, "!=", false},
 		{"false == false", false, "==", false},
 		{"5 <= 3", 5, "<=", 3},
+		{"x in y", "x", "in", "y"},
 	}
 
 	for _, tt := range infixTests {

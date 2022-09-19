@@ -29,9 +29,11 @@ const (
 
 	ARRAY_OBJ = "ARRAY"
 	HASH_OBJ  = "MAP"
-
-	WHILE_OBJ = "WHILE"
 )
+
+type Iterable interface {
+	Iters() []Object
+}
 
 type HashKey struct {
 	Type  ObjectType
@@ -142,6 +144,13 @@ func (s *String) HashKey() HashKey {
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
 func (s *String) FormattedInspect() string { return fmt.Sprintf("'%s'", s.Value) }
+func (s *String) Iters() []Object {
+	iters := []Object{}
+	for _, v := range strings.Split(s.Value, "") {
+		iters = append(iters, &String{Value: v})
+	}
+	return iters
+}
 
 type Builtin struct {
 	Fn BuiltinFunction
@@ -172,6 +181,9 @@ func (ao *Array) Inspect() string {
 	out.WriteString("]")
 
 	return out.String()
+}
+func (ao *Array) Iters() []Object {
+	return ao.Elements
 }
 
 type HashPair struct {
@@ -212,4 +224,13 @@ func (h *Hash) Inspect() string {
 	out.WriteString("}")
 
 	return out.String()
+}
+func (h *Hash) Iters() []Object {
+	iters := []Object{}
+
+	for _, m := range h.Pairs {
+		iters = append(iters, &Array{Elements: []Object{m.Key, m.Value}})
+	}
+
+	return iters
 }

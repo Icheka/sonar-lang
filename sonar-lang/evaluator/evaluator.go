@@ -86,6 +86,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return env.Set(node.Identifier.Value, result)
 
+	case *ast.ForStatement:
+		return evalForStatement(node, env)
+
 	case *ast.WhileStatement:
 		return evalWhileStatement(node, env)
 
@@ -249,8 +252,6 @@ func evalWhileStatement(ws *ast.WhileStatement, env *object.Environment) object.
 	// -- if condition is not true, break loop
 	// -- evaluate consequence
 
-	var result object.Object
-
 	for {
 		condition := Eval(ws.Condition, env)
 		if isError(condition) {
@@ -260,13 +261,72 @@ func evalWhileStatement(ws *ast.WhileStatement, env *object.Environment) object.
 			break
 		}
 		result := Eval(ws.Consequence, env)
-		// if there is a return statement, return immediately
-		if !isError(result) && result.Type() == object.RETURN_VALUE_OBJ {
+		// if there is a return, error or break, return immediately
+		if isError(result) || result.Type() == object.RETURN_VALUE_OBJ {
 			return result
 		}
 	}
 
-	return result
+	return &object.Null{}
+}
+
+func evalForStatement(fs *ast.ForStatement, env *object.Environment) object.Object {
+	// iterable is an object.Object that implements the Iterable interface
+	iterable, ok := Eval(fs.Iterable, env).(object.Iterable)
+
+	if !ok {
+		return NewError("'iterable' part of for...in statement must be an Iterable")
+	}
+
+	// iterable.Iters
+	iters := iterable.Iters()
+
+	var readonly = make(map[string]bool)
+	allowed := []string{
+		fs.Counter.String(),
+	}
+	scope := object.NewEphemeralScope(allowed, readonly, env)
+
+	for i, v := range iters {
+		// allow the counter to be mutated only to allow setting counter to iter
+		scope.Readonly = make(map[string]bool)
+
+		// set 'counter' to current iter
+		if iterable.(object.Object).Type() == object.HASH_OBJ {
+			arr := v.(*object.Array).Elements
+			val := scope.Set(fs.Counter.String(), &object.String{Value: arr[0].Inspect()})
+			if isError(val) {
+				return val
+			}
+			val = scope.Set(fs.Value.String(), &object.String{Value: arr[1].Inspect()})
+			if isError(val) {
+				return val
+			}
+		} else {
+			val := scope.Set(fs.Counter.String(), &object.Integer{Value: int64(i)})
+			if isError(val) {
+				return val
+			}
+			val = scope.Set(fs.Value.String(), v)
+			if isError(val) {
+				return val
+			}
+		}
+
+		// make the counter a constant to make it immutable until this iteration concludes
+		scope.Readonly = map[string]bool{
+			(fs.Counter.String()): true,
+			(fs.Value.String()):   true,
+		}
+
+		result := Eval(fs.Consequence, scope)
+		if isError(result) || result.Type() == object.RETURN_VALUE_OBJ {
+			return result
+		}
+
+	}
+
+	return &object.Null{}
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {

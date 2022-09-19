@@ -54,5 +54,5 @@ func main() {
 		}
 	}
 
-	fmt.Println("Usage: go run main.go [-f [path]]")
+	fmt.Println("Usage: go run main.go [-f [path]] | [-text input]")
 }
