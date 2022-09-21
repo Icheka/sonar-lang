@@ -6,6 +6,24 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
+func TestRangeBuiltin(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"range(0, 1)", "[0]"},
+		{"range(0, 4)", "[0, 1, 2, 3]"},
+		{"range(0, 5, 2)", "[0, 2, 4]"},
+		{"range(0, -5, 2)", "[]"},
+		{"range(0, 5, -2)", "[]"},
+		{"range(10, 5, -2)", "[10, 8, 6]"},
+	}
+
+	for _, tt := range tests {
+		testEvalType[*object.Array](t, tt.input, tt.expected)
+	}
+}
+
 func TestSortBuiltin(t *testing.T) {
 	input := `
 let a = [3,1,2]

@@ -213,6 +213,60 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
+	"range": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) < 2 || len(args) > 3 {
+				return &object.Error{Message: fmt.Sprintf("range() takes at least 2-3 arguments, %d given", len(args))}
+			}
+			for i, arg := range args {
+				if _, ok := arg.(*object.Integer); !ok {
+					return &object.Error{Message: fmt.Sprintf("expected argument to range() at position %d to be INTEGER, %T given", i+1, arg)}
+				}
+			}
+
+			start := args[0].(*object.Integer)
+			end := args[1].(*object.Integer)
+			step := &object.Integer{Value: 1}
+			if len(args) == 3 {
+				step = args[2].(*object.Integer)
+			}
+
+			S := start.Value
+			E := end.Value
+			St := step.Value
+
+			// if start == end, return []
+			// if step is a negative number, start must be > end
+			// if step is a positive number, start must be < end
+			if S == E {
+				return &object.Array{Elements: []object.Object{}}
+			}
+			if St < 0 && S < E {
+				return &object.Array{Elements: []object.Object{}}
+			}
+			if St > 0 && S > E {
+				return &object.Array{Elements: []object.Object{}}
+			}
+
+			result := []int64{}
+			if St > 0 {
+				for i := S; i < E; i += St {
+					result = append(result, i)
+				}
+			} else {
+				for i := S; i > E; i += St {
+					result = append(result, i)
+				}
+			}
+
+			arr := []object.Object{}
+			for _, v := range result {
+				arr = append(arr, &object.Integer{Value: v})
+			}
+
+			return &object.Array{Elements: arr}
+		},
+	},
 }
 
 func InitStdlib() {
