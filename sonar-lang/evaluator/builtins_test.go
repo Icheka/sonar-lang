@@ -17,7 +17,7 @@ func TestRangeBuiltin(t *testing.T) {
 		{"range(0, -5, 2)", "[]"},
 		{"range(0, 5, -2)", "[]"},
 		{"range(10, 5, -2)", "[10, 8, 6]"},
-		{"range(-4, -2)", "[-4, -3, -2]"},
+		{"range(-4, -2)", "[-4, -3]"},
 	}
 
 	for _, tt := range tests {
