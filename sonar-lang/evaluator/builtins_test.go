@@ -17,10 +17,21 @@ func TestRangeBuiltin(t *testing.T) {
 		{"range(0, -5, 2)", "[]"},
 		{"range(0, 5, -2)", "[]"},
 		{"range(10, 5, -2)", "[10, 8, 6]"},
+		{"range(-4, -2)", "[-4, -3]"},
 	}
 
 	for _, tt := range tests {
 		testEvalType[*object.Array](t, tt.input, tt.expected)
+	}
+
+	tests2 := []string{
+		"range(0)",
+	}
+	for _, tt := range tests2 {
+		evaluated := testEval(tt)
+		if _, ok := evaluated.(*object.Error); !ok {
+			t.Fatalf("expected evaluated to be ERROR, got=%T", evaluated)
+		}
 	}
 }
 
