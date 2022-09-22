@@ -89,10 +89,37 @@ var TypesBuiltins = map[string]*object.Builtin{
 			return illegalConversion(from, object.INTEGER_OBJ)
 		},
 	},
+	"float": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return NewError("int() takes 1 argument, %d given",
+					len(args))
+			}
+
+			from := args[0]
+
+			switch from.Type() {
+			case object.STRING_OBJ:
+				f := from.(*object.String).Value
+				fl, err := strconv.ParseFloat(f, 64)
+				if err == nil {
+					return &object.Float{Value: float64(fl)}
+				}
+
+			case object.FLOAT_OBJ:
+				return from
+
+			case object.INTEGER_OBJ:
+				return &object.Float{Value: float64(from.(*object.Integer).Value)}
+			}
+
+			return illegalConversion(from, object.FLOAT_OBJ)
+		},
+	},
 }
 
 func illegalConversion(from object.Object, to object.ObjectType) *object.Error {
-	return NewError("IllegalConversionError: %s to %s", from.Type(), object.INTEGER_OBJ)
+	return NewError("IllegalConversionError: %s to %s", from.Type(), to)
 }
 
 var ConvertableMap map[object.ObjectType][]object.ObjectType = map[object.ObjectType][]object.ObjectType{
