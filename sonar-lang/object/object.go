@@ -31,18 +31,18 @@ const (
 	HASH_OBJ  = "MAP"
 )
 
-var ObjectTypes map[string]bool = map[string]bool{
-	(strings.ToLower(NULL_OBJ)):         true,
-	(strings.ToLower(ERROR_OBJ)):        true,
-	(strings.ToLower(INTEGER_OBJ)):      true,
-	(strings.ToLower(FLOAT_OBJ)):        true,
-	(strings.ToLower(BOOLEAN_OBJ)):      true,
-	(strings.ToLower(STRING_OBJ)):       true,
-	(strings.ToLower(RETURN_VALUE_OBJ)): true,
-	(strings.ToLower(FUNCTION_OBJ)):     true,
-	(strings.ToLower(BUILTIN_OBJ)):      true,
-	(strings.ToLower(ARRAY_OBJ)):        true,
-	(strings.ToLower(HASH_OBJ)):         true,
+var ObjectTypes map[ObjectType]bool = map[ObjectType]bool{
+	NULL_OBJ:         true,
+	ERROR_OBJ:        true,
+	INTEGER_OBJ:      true,
+	FLOAT_OBJ:        true,
+	BOOLEAN_OBJ:      true,
+	STRING_OBJ:       true,
+	RETURN_VALUE_OBJ: true,
+	FUNCTION_OBJ:     true,
+	BUILTIN_OBJ:      true,
+	ARRAY_OBJ:        true,
+	HASH_OBJ:         true,
 }
 
 type Iterable interface {

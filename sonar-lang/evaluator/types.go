@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/icheka/sonar-lang/sonar-lang/object"
-	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
 
 var TypesBuiltins = map[string]*object.Builtin{
@@ -16,33 +15,30 @@ var TypesBuiltins = map[string]*object.Builtin{
 					len(args))
 			}
 
-			from := args[0]
+			value := args[0]
 			to := args[1]
+			result := false
 
-			if _, ok := object.ObjectTypes[strings.ToLower(to.Inspect())]; !ok {
-				return NewError("%s is not a type", to.Inspect())
-			}
-
-			if from.Type() == object.STRING_OBJ {
-				fromValue := from.(*object.String).Value
-				result := false
-
-				switch to.Inspect() {
-				case object.INTEGER_OBJ:
-					fallthrough
-				case object.FLOAT_OBJ:
-					if _, err := strconv.ParseFloat(fromValue, 64); err == nil {
-						result = true
-					}
+			switch strings.ToUpper(to.Inspect()) {
+			case object.STRING_OBJ:
+				result = true
+			case object.INTEGER_OBJ:
+				r := toInteger(value)
+				if r.Type() == object.INTEGER_OBJ {
+					result = true
 				}
-				return &object.Boolean{Value: result}
+			case object.FLOAT_OBJ:
+				r := toFloat(value)
+				if r.Type() == object.FLOAT_OBJ {
+					result = true
+				}
+			case object.HASH_OBJ:
+				if value.Type() == object.ARRAY_OBJ {
+					result = true
+				}
 			}
 
-			types := ConvertableMap[from.Type()]
-			if !utils.SliceContains(types, to.Type()) {
-				return FALSE
-			}
-			return TRUE
+			return &object.Boolean{Value: result}
 		},
 	},
 	"string": {
@@ -69,53 +65,57 @@ var TypesBuiltins = map[string]*object.Builtin{
 					len(args))
 			}
 
-			from := args[0]
-
-			switch from.Type() {
-			case object.STRING_OBJ:
-				f := from.(*object.String).Value
-				fl, err := strconv.ParseFloat(f, 64)
-				if err == nil {
-					return &object.Integer{Value: int64(fl)}
-				}
-
-			case object.INTEGER_OBJ:
-				return from
-
-			case object.FLOAT_OBJ:
-				return &object.Integer{Value: int64(from.(*object.Float).Value)}
-			}
-
-			return illegalConversion(from, object.INTEGER_OBJ)
+			return toInteger(args[0])
 		},
 	},
 	"float": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("int() takes 1 argument, %d given",
+				return NewError("float() takes 1 argument, %d given",
 					len(args))
 			}
 
-			from := args[0]
-
-			switch from.Type() {
-			case object.STRING_OBJ:
-				f := from.(*object.String).Value
-				fl, err := strconv.ParseFloat(f, 64)
-				if err == nil {
-					return &object.Float{Value: float64(fl)}
-				}
-
-			case object.FLOAT_OBJ:
-				return from
-
-			case object.INTEGER_OBJ:
-				return &object.Float{Value: float64(from.(*object.Integer).Value)}
-			}
-
-			return illegalConversion(from, object.FLOAT_OBJ)
+			return toFloat(args[0])
 		},
 	},
+}
+
+func toFloat(from object.Object) object.Object {
+	switch from.Type() {
+	case object.STRING_OBJ:
+		f := from.(*object.String).Value
+		fl, err := strconv.ParseFloat(f, 64)
+		if err == nil {
+			return &object.Float{Value: float64(fl)}
+		}
+
+	case object.FLOAT_OBJ:
+		return from
+
+	case object.INTEGER_OBJ:
+		return &object.Float{Value: float64(from.(*object.Integer).Value)}
+	}
+
+	return illegalConversion(from, object.FLOAT_OBJ)
+}
+
+func toInteger(from object.Object) object.Object {
+	switch from.Type() {
+	case object.STRING_OBJ:
+		f := from.(*object.String).Value
+		fl, err := strconv.ParseFloat(f, 64)
+		if err == nil {
+			return &object.Integer{Value: int64(fl)}
+		}
+
+	case object.INTEGER_OBJ:
+		return from
+
+	case object.FLOAT_OBJ:
+		return &object.Integer{Value: int64(from.(*object.Float).Value)}
+	}
+
+	return illegalConversion(from, object.INTEGER_OBJ)
 }
 
 func illegalConversion(from object.Object, to object.ObjectType) *object.Error {
@@ -131,7 +131,7 @@ var ConvertableMap map[object.ObjectType][]object.ObjectType = map[object.Object
 	object.STRING_OBJ: {object.INTEGER_OBJ, object.FLOAT_OBJ},
 
 	object.ARRAY_OBJ:    {},
-	object.HASH_OBJ:     {},
+	object.HASH_OBJ:     {object.ARRAY_OBJ},
 	object.FUNCTION_OBJ: {},
 	object.BUILTIN_OBJ:  {},
 	object.ERROR_OBJ:    {},
