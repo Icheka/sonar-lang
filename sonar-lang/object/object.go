@@ -31,6 +31,20 @@ const (
 	HASH_OBJ  = "MAP"
 )
 
+var ObjectTypes map[ObjectType]bool = map[ObjectType]bool{
+	NULL_OBJ:         true,
+	ERROR_OBJ:        true,
+	INTEGER_OBJ:      true,
+	FLOAT_OBJ:        true,
+	BOOLEAN_OBJ:      true,
+	STRING_OBJ:       true,
+	RETURN_VALUE_OBJ: true,
+	FUNCTION_OBJ:     true,
+	BUILTIN_OBJ:      true,
+	ARRAY_OBJ:        true,
+	HASH_OBJ:         true,
+}
+
 type Iterable interface {
 	Iters() []Object
 }
