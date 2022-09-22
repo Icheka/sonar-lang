@@ -10,12 +10,39 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
 
+func TestContinueStatement(t *testing.T) {
+	input := `
+let j = []
+let i = 0
+for (i, v in range(1, 4)) {
+	if (v == 2) {
+		continue
+	}
+	j = push(j, i)
+}
+len(j)
+`
+	testEvalInteger(t, input, 2)
+}
+
 func TestBreakStatement(t *testing.T) {
 	input := `
 let i = 0
 let j = 0
 while (i < 5) {
 	i++
+	j = i
+	if (i == 2) {
+		break
+	}
+}
+j
+`
+	testEvalInteger(t, input, 2)
+
+	input = `
+let j = 0
+for (i,_ in range(1, 6)) {
 	j = i
 	if (i == 2) {
 		break

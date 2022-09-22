@@ -46,6 +46,7 @@ while
 for
 in
 break
+continue
 |
 `
 
@@ -154,6 +155,7 @@ break
 		{token.FOR, "for"},
 		{token.IN, "in"},
 		{token.BREAK, "break"},
+		{token.CONTINUE, "continue"},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}
