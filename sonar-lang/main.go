@@ -20,7 +20,7 @@ func evaluate(source string) {
 		repl.PrintParserErrors(os.Stderr, p.Errors())
 		return
 	}
-	if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated.Type() == object.ERROR_OBJ {
+	if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated != nil && evaluated.Type() == object.ERROR_OBJ {
 		fmt.Println(evaluated.Inspect())
 	}
 }
