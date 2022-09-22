@@ -8,6 +8,40 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
+func TestIntegerConvertBuiltin(t *testing.T) {
+	tests := []struct {
+		obj      object.Object
+		expected interface{}
+	}{
+		{&object.String{Value: "\"1\""}, 1},
+		{&object.String{Value: "\"1.3\""}, 1},
+		{&object.String{Value: "\"1.f\""}, false},
+
+		{&object.Float{Value: 1.4}, 1},
+		{&object.Integer{Value: 1}, 1},
+
+		{&object.Array{Elements: []object.Object{}}, false},
+		{&object.Hash{Pairs: map[object.HashKey]object.HashPair{}}, false},
+	}
+
+	for _, tt := range tests {
+		input := fmt.Sprintf("int(%s)", tt.obj.Inspect())
+		evaluated := testEval(input)
+		switch evaluated.Type() {
+		case object.ERROR_OBJ:
+			if tt.expected != false {
+				t.Errorf("expected evaluated to be ERROR, got=%t", evaluated)
+			}
+		default:
+			i, ok := tt.expected.(int)
+			if !ok {
+				t.Errorf("expected tt.expected to be int, got=%T", tt.expected)
+			}
+			testEvalInteger(t, input, i)
+		}
+	}
+}
+
 func TestStringConvertBuiltin(t *testing.T) {
 	input := []struct {
 		from object.Object
