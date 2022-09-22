@@ -9,8 +9,8 @@ import (
 )
 
 func TestMapBuiltin(t *testing.T) {
-	input := `map([1, 2, "John", true])`
-	expected := `{0: 1, 1: 2, 2: 'John', 3: true}`
+	input := `map([1])`
+	expected := `{0: 1}`
 	testEvalType[*object.Hash](t, input, expected)
 }
 
