@@ -190,9 +190,15 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseForStatement()
 	case token.WHILE:
 		return p.parseWhileStatement()
+	case token.BREAK:
+		return p.parseBreakStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
+}
+
+func (p *Parser) parseBreakStatement() *ast.BreakStatement {
+	return &ast.BreakStatement{Token: p.curToken}
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {

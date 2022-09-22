@@ -10,6 +10,22 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
 
+func TestBreakStatement(t *testing.T) {
+	input := `
+let i = 0
+let j = 0
+while (i < 5) {
+	i++
+	j = i
+	if (i == 2) {
+		break
+	}
+}
+j
+`
+	testEvalInteger(t, input, 2)
+}
+
 func TestDeleteMapKeyExpression(t *testing.T) {
 	input := `
 let m  = {1: 2}
