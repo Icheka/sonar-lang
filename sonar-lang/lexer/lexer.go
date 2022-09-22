@@ -8,20 +8,38 @@ import (
 
 type Lexer struct {
 	input        string
-	position     int  // current position in input (points to current char)
-	readPosition int  // current reading position in input (after current char)
-	ch           byte // current char under examination
+	position     int    // current position in input (points to current char)
+	readPosition int    // current reading position in input (after current char)
+	ch           byte   // current char under examination
+	File         string // path to current file, relative to $PWD
+	Line         int    // current line being scanned
+	Column       int    // number of characters scanned in Line
+}
+type LexerOptions struct {
+	Path string
 }
 
-func New(input string) *Lexer {
-	l := &Lexer{input: input}
+func New(input string, options *LexerOptions) *Lexer {
+	l := &Lexer{input: input, Line: 1, Column: 0}
 	l.readChar()
+
+	if options != nil {
+		if len(options.Path) > 0 {
+			l.File = options.Path
+		}
+	}
+
 	return l
 }
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
+	l.Column++
+	if l.ch == '\n' {
+		l.Line++
+		l.Column = 0
+	}
 	l.skipWhitespace()
 
 	if string(l.ch) == token.SLASH && string(l.peekChar()) == token.SLASH {

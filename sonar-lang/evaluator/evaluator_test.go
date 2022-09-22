@@ -838,7 +838,7 @@ func testStringObject(t *testing.T, obj object.Object, expected interface{}) boo
 }
 
 func testEval(input string) object.Object {
-	l := lexer.New(input)
+	l := lexer.New(input, nil)
 	p := parser.New(l)
 	program := p.ParseProgram()
 	env := object.NewEnvironment()

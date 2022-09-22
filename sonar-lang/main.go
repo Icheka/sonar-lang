@@ -13,8 +13,8 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/repl"
 )
 
-func evaluate(source string) {
-	p := parser.New(lexer.New(source))
+func evaluate(source string, options *lexer.LexerOptions) {
+	p := parser.New(lexer.New(source, options))
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		repl.PrintParserErrors(os.Stderr, p.Errors())
@@ -46,10 +46,10 @@ func main() {
 			input := &inputs.FileInput{Path: filePath}
 			source := input.Read()
 
-			evaluate(source)
+			evaluate(source, &lexer.LexerOptions{Path: filePath})
 			return
 		case "-text":
-			evaluate(args[1])
+			evaluate(args[1], nil)
 			return
 		}
 	}

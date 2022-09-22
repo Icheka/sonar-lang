@@ -160,7 +160,7 @@ continue
 		{token.EOF, ""},
 	}
 
-	l := New(input)
+	l := New(input, nil)
 
 	for i, tt := range tests {
 		tok := l.NextToken()

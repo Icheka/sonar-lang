@@ -9,8 +9,8 @@ import (
 )
 
 func TestMapBuiltin(t *testing.T) {
-	input := `map([1, 2, "John", true])`
-	expected := `{0: 1, 1: 2, 2: 'John', 3: true}`
+	input := `map([1])`
+	expected := `{0: 1}`
 	testEvalType[*object.Hash](t, input, expected)
 }
 
@@ -173,11 +173,11 @@ func getValueOfType(tp object.ObjectType) (object.Object, string) {
 			Value: 0,
 		}
 		val = &object.Hash{Pairs: map[object.HashKey]object.HashPair{
-			key: object.HashPair{Key: &object.String{Value: "name"}, Value: &object.String{Value: "Icheka"}},
+			key: {Key: &object.String{Value: "name"}, Value: &object.String{Value: "Icheka"}},
 		}}
 	case object.FUNCTION_OBJ:
 		val = &object.Function{
-			Parameters: []*ast.Identifier{&ast.Identifier{Value: "getName"}},
+			Parameters: []*ast.Identifier{{Value: "getName"}},
 			Body:       &ast.BlockStatement{Statements: []ast.Statement{&ast.ReturnStatement{ReturnValue: &ast.IntegerLiteral{Value: int64(1)}}}},
 			Env:        object.NewEnvironment(),
 		}
