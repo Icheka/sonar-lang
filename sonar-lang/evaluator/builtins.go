@@ -13,7 +13,7 @@ var builtins = map[string]*object.Builtin{
 	"len": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("wrong number of arguments. got=%d, want=1",
+				return NewError("len() takes 1 argument, %d given",
 					len(args))
 			}
 
@@ -273,6 +273,7 @@ func InitStdlib() {
 	var stdlibFunctions = []map[string]*object.Builtin{
 		ArrayBuiltins,
 		MapBuiltins,
+		TypesBuiltins,
 	}
 
 	for _, f := range stdlibFunctions {
