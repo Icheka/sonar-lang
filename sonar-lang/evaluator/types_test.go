@@ -8,6 +8,28 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
+func TestStringConvertBuiltin(t *testing.T) {
+	input := []struct {
+		from object.Object
+	}{
+		{&object.Integer{Value: 1}},
+		{&object.Float{Value: 1}},
+		{TRUE},
+		{FALSE},
+		{&object.String{Value: "\"Icheka\""}},
+		{&object.Integer{Value: 1}},
+		{&object.Array{Elements: []object.Object{&object.Integer{Value: 1}}}},
+		{&object.Hash{Pairs: map[object.HashKey]object.HashPair{}}},
+	}
+
+	for _, tt := range input {
+		evaluated := testEval(fmt.Sprintf("string(%s)", tt.from.Inspect()))
+		if evaluated.Type() != object.STRING_OBJ {
+			t.Fatalf("expected evaluated to be STRING, got=%T(%+v)", evaluated, evaluated)
+		}
+	}
+}
+
 func TestConvertableBuiltin(t *testing.T) {
 	tests := map[object.ObjectType][]object.ObjectType{
 		FALSE.Type(): {object.STRING_OBJ},

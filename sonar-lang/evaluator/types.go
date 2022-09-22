@@ -45,6 +45,23 @@ var TypesBuiltins = map[string]*object.Builtin{
 			return TRUE
 		},
 	},
+	"string": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return NewError("string() takes 1 argument, %d given",
+					len(args))
+			}
+
+			from := args[0]
+
+			switch from.Type() {
+			case object.STRING_OBJ:
+				return from
+			default:
+				return &object.String{Value: from.Inspect()}
+			}
+		},
+	},
 }
 
 var ConvertableMap map[object.ObjectType][]object.ObjectType = map[object.ObjectType][]object.ObjectType{
