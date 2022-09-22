@@ -9,6 +9,25 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
+func TestContinueKeyword(t *testing.T) {
+	input := "continue"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Body does not contain %d statements. got=%d\n",
+			1, len(program.Statements))
+	}
+
+	if _, ok := program.Statements[0].(*ast.ContinueStatement); !ok {
+		t.Fatalf("program.Statements[0] is not ast.ContinueStatement. got=%T",
+			program.Statements[0])
+	}
+}
+
 func TestBreakKeyword(t *testing.T) {
 	input := "break"
 
@@ -965,7 +984,7 @@ func TestParsingEmptyArrayLiterals(t *testing.T) {
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
 	array, ok := stmt.Expression.(*ast.ArrayLiteral)
 	if !ok {
 		t.Fatalf("exp not ast.ArrayLiteral. got=%T", stmt.Expression)
@@ -1011,7 +1030,7 @@ func TestParsingIndexExpressions(t *testing.T) {
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
 	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 	if !ok {
 		t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)

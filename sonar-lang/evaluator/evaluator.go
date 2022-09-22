@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	NULL  = &object.Null{}
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-	BREAK = &object.Break{}
+	NULL     = &object.Null{}
+	TRUE     = &object.Boolean{Value: true}
+	FALSE    = &object.Boolean{Value: false}
+	BREAK    = &object.Break{}
+	CONTINUE = &object.Continue{}
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -95,6 +96,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.BreakStatement:
 		return BREAK
+
+	case *ast.ContinueStatement:
+		return CONTINUE
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -241,7 +245,7 @@ func evalBlockStatement(
 
 		if result != nil {
 			rt := result.Type()
-			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
+			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ || rt == object.BREAK_OBJ || rt == object.CONTINUE_OBJ {
 				return result
 			}
 		}
@@ -324,7 +328,12 @@ func evalForStatement(fs *ast.ForStatement, env *object.Environment) object.Obje
 		}
 
 		result := Eval(fs.Consequence, scope)
-		if isError(result) || result.Type() == object.RETURN_VALUE_OBJ {
+
+		if isContinue(result) {
+			continue
+		}
+
+		if isError(result) || isBreak(result) || result.Type() == object.RETURN_VALUE_OBJ {
 			return result
 		}
 
@@ -704,6 +713,10 @@ func isTruthy(obj object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func isContinue(obj object.Object) bool {
+	return obj.Type() == object.CONTINUE_OBJ
 }
 
 func isBreak(obj object.Object) bool {

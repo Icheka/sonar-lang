@@ -30,7 +30,8 @@ const (
 	ARRAY_OBJ = "ARRAY"
 	HASH_OBJ  = "MAP"
 
-	BREAK_OBJ = "BREAK"
+	BREAK_OBJ    = "BREAK"
+	CONTINUE_OBJ = "CONTINUE"
 )
 
 var ObjectTypes map[ObjectType]bool = map[ObjectType]bool{
@@ -256,3 +257,8 @@ type Break struct{}
 
 func (b *Break) Type() ObjectType { return BREAK_OBJ }
 func (b *Break) Inspect() string  { return "break" }
+
+type Continue struct{}
+
+func (c *Continue) Type() ObjectType { return CONTINUE_OBJ }
+func (c *Continue) Inspect() string  { return "continue" }
