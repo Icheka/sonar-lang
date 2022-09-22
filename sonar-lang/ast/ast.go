@@ -173,7 +173,17 @@ func (fs *ForStatement) String() string {
 	return out.String()
 }
 
-// Expressions
+type BreakStatement struct {
+	Token token.Token // the 'break' token
+}
+
+func (bs *BreakStatement) statementNode()       {}
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BreakStatement) String() string       { return bs.TokenLiteral() }
+
+// *****************
+//  * Expressions *
+// *****************
 type Identifier struct {
 	Token token.Token // the token.IDENT token
 	Value string

@@ -16,6 +16,7 @@ var (
 	NULL  = &object.Null{}
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
+	BREAK = &object.Break{}
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -91,6 +92,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.WhileStatement:
 		return evalWhileStatement(node, env)
+
+	case *ast.BreakStatement:
+		return BREAK
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -262,7 +266,7 @@ func evalWhileStatement(ws *ast.WhileStatement, env *object.Environment) object.
 		}
 		result := Eval(ws.Consequence, env)
 		// if there is a return, error or break, return immediately
-		if isError(result) || result.Type() == object.RETURN_VALUE_OBJ {
+		if isError(result) || isBreak(result) || result.Type() == object.RETURN_VALUE_OBJ {
 			return result
 		}
 	}
@@ -700,6 +704,10 @@ func isTruthy(obj object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func isBreak(obj object.Object) bool {
+	return obj.Type() == object.BREAK_OBJ
 }
 
 func NewError(format string, a ...interface{}) *object.Error {

@@ -45,6 +45,7 @@ while
 /=
 for
 in
+break
 |
 `
 
@@ -152,6 +153,7 @@ in
 		{token.SLASH_ASSIGN, "/="},
 		{token.FOR, "for"},
 		{token.IN, "in"},
+		{token.BREAK, "break"},
 		{token.ILLEGAL, "|"},
 		{token.EOF, ""},
 	}

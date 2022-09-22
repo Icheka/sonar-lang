@@ -9,6 +9,25 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
 
+func TestBreakKeyword(t *testing.T) {
+	input := "break"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Body does not contain %d statements. got=%d\n",
+			1, len(program.Statements))
+	}
+
+	if _, ok := program.Statements[0].(*ast.BreakStatement); !ok {
+		t.Fatalf("program.Statements[0] is not ast.BreakStatement. got=%T",
+			program.Statements[0])
+	}
+}
+
 func TestForLoopStatement(t *testing.T) {
 	input := `
 for (i, v in y) {

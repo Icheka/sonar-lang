@@ -29,6 +29,8 @@ const (
 
 	ARRAY_OBJ = "ARRAY"
 	HASH_OBJ  = "MAP"
+
+	BREAK_OBJ = "BREAK"
 )
 
 var ObjectTypes map[ObjectType]bool = map[ObjectType]bool{
@@ -43,6 +45,7 @@ var ObjectTypes map[ObjectType]bool = map[ObjectType]bool{
 	BUILTIN_OBJ:      true,
 	ARRAY_OBJ:        true,
 	HASH_OBJ:         true,
+	BREAK_OBJ:        true,
 }
 
 type Iterable interface {
@@ -248,3 +251,8 @@ func (h *Hash) Iters() []Object {
 
 	return iters
 }
+
+type Break struct{}
+
+func (b *Break) Type() ObjectType { return BREAK_OBJ }
+func (b *Break) Inspect() string  { return "break" }
