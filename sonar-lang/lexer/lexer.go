@@ -29,6 +29,10 @@ func (l *Lexer) NextToken() token.Token {
 		return l.NextToken()
 	}
 
+	if l.ch == '/' && l.peekChar() == '*' {
+		l.skipMultiLineComment()
+	}
+
 	switch l.ch {
 	case '=':
 		if l.peekChar() == '=' {
@@ -144,6 +148,23 @@ func (l *Lexer) NextToken() token.Token {
 
 func (l *Lexer) skipSingleLineComment() {
 	for l.ch != '\n' && l.ch != byte(0) {
+		l.readChar()
+	}
+	l.skipWhitespace()
+}
+
+func (l *Lexer) skipMultiLineComment() {
+	scanning := true
+	for scanning {
+		switch l.ch {
+		case 0:
+			scanning = false
+		case '*':
+			if l.peekChar() == '/' {
+				scanning = false
+				l.readChar() // advance to '/'
+			}
+		}
 		l.readChar()
 	}
 	l.skipWhitespace()
