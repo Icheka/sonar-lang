@@ -8,6 +8,12 @@ import (
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
+func TestMapBuiltin(t *testing.T) {
+	input := `map([1, 2, "John", true])`
+	expected := `{0: 1, 1: 2, 2: 'John', 3: true}`
+	testEvalType[*object.Hash](t, input, expected)
+}
+
 func TestFloatConvertBuiltin(t *testing.T) {
 	tests := []struct {
 		obj      object.Object

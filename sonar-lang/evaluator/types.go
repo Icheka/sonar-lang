@@ -78,6 +78,31 @@ var TypesBuiltins = map[string]*object.Builtin{
 			return toFloat(args[0])
 		},
 	},
+	"map": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return NewError("map() takes 1 argument, %d given",
+					len(args))
+			}
+
+			switch args[0].Type() {
+			case object.ARRAY_OBJ:
+				elements := args[0].(*object.Array).Elements
+				pairs := map[object.HashKey]object.HashPair{}
+
+				for i, v := range elements {
+					pairs[object.HashKey{Type: object.INTEGER_OBJ, Value: uint64(i)}] = object.HashPair{
+						Key:   &object.Integer{Value: int64(i)},
+						Value: v,
+					}
+				}
+
+				return &object.Hash{Pairs: pairs}
+			default:
+				return NewError("Expected argument to ARRAY, got %s", args[0].Type())
+			}
+		},
+	},
 }
 
 func toFloat(from object.Object) object.Object {
