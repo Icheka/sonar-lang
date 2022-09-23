@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/icheka/sonar-lang/sonar-lang/ast"
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
@@ -97,7 +98,7 @@ func TestStringConvertBuiltin(t *testing.T) {
 	}
 
 	for _, tt := range input {
-		evaluated := testEval(fmt.Sprintf("string(%s)", tt.from.Inspect()))
+		evaluated := testEval(fmt.Sprintf("str(%s)", tt.from.Inspect()))
 		if evaluated.Type() != object.STRING_OBJ {
 			t.Fatalf("expected evaluated to be STRING, got=%T(%+v)", evaluated, evaluated)
 		}
@@ -184,7 +185,7 @@ func getValueOfType(tp object.ObjectType) (object.Object, string) {
 	case object.BUILTIN_OBJ:
 		val = builtins["len"]
 	case object.ERROR_OBJ:
-		val = NewError("An error")
+		val = NewError(errors.Error{Message: "An error"})
 	case object.NULL_OBJ:
 		val = &object.Null{}
 	}

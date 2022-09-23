@@ -4,8 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/evaluator"
+	"github.com/icheka/sonar-lang/sonar-lang/keys"
 	"github.com/icheka/sonar-lang/sonar-lang/lexer"
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 	"github.com/icheka/sonar-lang/sonar-lang/parser"
@@ -42,9 +46,50 @@ func Start(in io.Reader, out io.Writer) {
 	}
 }
 
-func PrintParserErrors(out io.Writer, errors []string) {
-	io.WriteString(out, " parser errors:\n")
-	for _, msg := range errors {
-		io.WriteString(out, "\t"+msg+"\n")
+func PrintParserErrors(out io.Writer, errors []errors.Error) {
+	if len(errors) == 0 {
+		return
+
 	}
+	for i, e := range errors[0:1] {
+		if len(e.File) != 0 {
+			io.WriteString(out, fmt.Sprintf("File %s, ", normalisePath(e.File)))
+		}
+
+		// add [LINE:COLUMN]
+		io.WriteString(out, fmt.Sprintf("line %d:%d\n\n", e.Line, e.Column))
+
+		// and error
+		io.WriteString(out, "\t")
+		if len(e.LineText) != 0 {
+			drawErrorTracer(out, &e)
+		}
+		io.WriteString(out, fmt.Sprintf("%s\n", e.String()))
+
+		if len(e.Hint) != 0 && keys.Keys.MODE == "DEV" {
+			io.WriteString(out, fmt.Sprintf("[Hint] %s\n", e.Hint))
+		}
+		if i < len(errors)-1 {
+			io.WriteString(out, "\n")
+		}
+	}
+}
+
+func normalisePath(p string) string {
+	pwd, _ := os.Getwd()
+	return strings.Replace(p, pwd, ".", 1)
+}
+
+func drawErrorTracer(out io.Writer, err *errors.Error) {
+	if len(err.LineText) == 0 {
+		return
+	}
+
+	indent := []string{"\t"}
+	for i := 0; i < err.LineTextTokenPosition; i++ {
+		indent = append(indent, " ")
+	}
+	indent = append(indent, "^")
+
+	io.WriteString(out, fmt.Sprintf("%s\n%s\n\n", err.LineText, strings.Join(indent, "")))
 }

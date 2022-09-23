@@ -3,6 +3,7 @@ package evaluator
 import (
 	"strings"
 
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
@@ -10,12 +11,11 @@ var ArrayBuiltins = map[string]*object.Builtin{
 	"push": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) < 2 {
-				return NewError("`push` requires at least 2 arguments")
+				return NewError(errors.RequiresXArgumentsError(2, len(args), "push"))
 			}
 
 			if args[0].Type() != object.ARRAY_OBJ {
-				return NewError("'array' argument to `push` must be ARRAY, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXMustBeYError("array", "push", object.ARRAY_OBJ, args[0].Inspect()))
 			}
 
 			arrObj := args[0].(*object.Array)
@@ -28,20 +28,18 @@ var ArrayBuiltins = map[string]*object.Builtin{
 	"pop": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) < 1 {
-				return NewError("`pop` requires at least 1 argument")
+				return NewError(errors.RequiresAtLeastXArgumentsError("pop", 1, len(args)))
 			}
 
 			if args[0].Type() != object.ARRAY_OBJ {
-				return NewError("'array' argument to `pop` must be ARRAY, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXMustBeYError("array", "pop", object.ARRAY_OBJ, args[0].Inspect()))
 			}
 
 			arr := args[0].(*object.Array)
 			idx := len(arr.Elements) - 1
 			if len(args) == 2 {
 				if args[1].Type() != object.INTEGER_OBJ {
-					return NewError("'index' argument to `pop` must be INTEGER, got %s",
-						args[1].Type())
+					return NewError(errors.ArgumentToXMustBeYError("index", "pop", object.INTEGER_OBJ, args[1].Inspect()))
 				}
 				idx = int(args[1].(*object.Integer).Value)
 			}
@@ -56,13 +54,6 @@ var ArrayBuiltins = map[string]*object.Builtin{
 			return poppedElement
 		},
 	},
-}
-
-func checkArity(args []object.Object, expected int) (bool, *object.Error) {
-	if len(args) != expected {
-		return false, WrongArityError(len(args), 2)
-	}
-	return true, nil
 }
 
 func arrayContains(obj *object.Array, elm object.Object) bool {

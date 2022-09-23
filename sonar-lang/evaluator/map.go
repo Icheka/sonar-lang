@@ -1,17 +1,19 @@
 package evaluator
 
-import "github.com/icheka/sonar-lang/sonar-lang/object"
+import (
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
+	"github.com/icheka/sonar-lang/sonar-lang/object"
+)
 
 var MapBuiltins = map[string]*object.Builtin{
 	"mapKeys": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("`mapKeys` requires only 1 argument")
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "mapKeys"))
 			}
 
 			if args[0].Type() != object.HASH_OBJ {
-				return NewError("'map' argument to `mapKeys` must be MAP, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXMustBeYError("map", "mapKeys", "MAP", string(args[0].Type())))
 			}
 
 			mapObj := args[0].(*object.Hash)
@@ -27,12 +29,11 @@ var MapBuiltins = map[string]*object.Builtin{
 	"mapValues": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("`mapValues` requires only 1 argument")
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "mapValues"))
 			}
 
 			if args[0].Type() != object.HASH_OBJ {
-				return NewError("'map' argument to `mapValues` must be MAP, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXMustBeYError("map", "mapValues", "MAP", string(args[0].Type())))
 			}
 
 			mapObj := args[0].(*object.Hash)
@@ -48,12 +49,11 @@ var MapBuiltins = map[string]*object.Builtin{
 	"mapEntries": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("`mapEntries` requires only 1 argument")
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "mapEntries"))
 			}
 
 			if args[0].Type() != object.HASH_OBJ {
-				return NewError("'map' argument to `mapEntries` must be MAP, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXMustBeYError("map", "mapEntries", "MAP", string(args[0].Type())))
 			}
 
 			mapObj := args[0].(*object.Hash)

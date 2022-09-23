@@ -7,10 +7,10 @@ const (
 	EOF     = "EOF"
 
 	// Identifiers + literals
-	IDENT  = "IDENT"  // add, foobar, x, y, ...
-	INT    = "INT"    // 1343456
-	FLOAT  = "FLOAT"  // 3.142
-	STRING = "STRING" // "foobar"
+	IDENT  = "IDENTIFIER" // add, foobar, x, y, ...
+	INT    = "INT"        // 1343456
+	FLOAT  = "FLOAT"      // 3.142
+	STRING = "STRING"     // "foobar"
 
 	// Operators
 	PLUS     = "+"

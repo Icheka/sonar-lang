@@ -8,19 +8,21 @@ import (
 
 type Lexer struct {
 	input        string
-	position     int    // current position in input (points to current char)
-	readPosition int    // current reading position in input (after current char)
-	ch           byte   // current char under examination
-	File         string // path to current file, relative to $PWD
-	Line         int    // current line being scanned
-	Column       int    // number of characters scanned in Line
+	position     int      // current position in input (points to current char)
+	readPosition int      // current reading position in input (after current char)
+	ch           byte     // current char under examination
+	File         string   // path to current file, relative to $PWD
+	Line         int      // current line being scanned
+	Column       int      // number of characters scanned in Line
+	LineSpan     []string // a slice of format ([index of start of line, index of end of line])
+	InputLength  int
 }
 type LexerOptions struct {
 	Path string
 }
 
 func New(input string, options *LexerOptions) *Lexer {
-	l := &Lexer{input: input, Line: 1, Column: 0}
+	l := &Lexer{input: input, Line: 1, Column: 0, InputLength: len(input)}
 	l.readChar()
 
 	if options != nil {
@@ -30,6 +32,18 @@ func New(input string, options *LexerOptions) *Lexer {
 	}
 
 	return l
+}
+
+func (l *Lexer) LineText(start, end int) string {
+	return l.input[start:end]
+}
+
+func (l *Lexer) Input() string {
+	return l.input
+}
+
+func (l *Lexer) Position() int {
+	return l.position - 2
 }
 
 func (l *Lexer) NextToken() token.Token {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 	"github.com/icheka/sonar-lang/sonar-lang/utils"
 )
@@ -13,8 +14,7 @@ var builtins = map[string]*object.Builtin{
 	"len": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("len() takes 1 argument, %d given",
-					len(args))
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "len"))
 			}
 
 			switch arg := args[0].(type) {
@@ -25,8 +25,7 @@ var builtins = map[string]*object.Builtin{
 			case *object.Hash:
 				return &object.Integer{Value: int64(len(arg.Pairs))}
 			default:
-				return NewError("argument to `len` not supported, got %s",
-					args[0].Type())
+				return NewError(errors.TypeOfArgumentNotAllowed("len", "iterable", string(arg.Type()), []string{"ITERABLE"}))
 			}
 		},
 	},
@@ -59,15 +58,14 @@ var builtins = map[string]*object.Builtin{
 				-- indices wrap around len(arr) when negative
 			*/
 			if len(args) == 0 {
-				return NewError("`slice` requires at least 1 argument")
+				return NewError(errors.RequiresAtLeastXArgumentsError("slice", len(args), 1))
 			}
 			obj := args[0]
 			if obj.Type() != object.ARRAY_OBJ && obj.Type() != object.STRING_OBJ {
-				return NewError("first argument to `slice` must be of type ARRAY or STRING, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXAtYMustBeZError(0, "slice", "ARRAY or STRING", string(args[0].Type())))
 			}
 			if len(args) > 4 {
-				return NewError("`slice` requires at most 4 arguments, %d given", len(args))
+				return NewError(errors.RequiresAtMostXArgumentsError("slice", len(args), 4))
 			}
 
 			switch obj.Type() {
@@ -99,7 +97,7 @@ var builtins = map[string]*object.Builtin{
 	"contains": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
-				return NewError("`contains` requires 2 arguments, got=%d", len(args))
+				return NewError(errors.RequiresXArgumentsError(2, len(args), "contains"))
 			}
 			obj := args[0]
 			elm := args[1]
@@ -110,15 +108,14 @@ var builtins = map[string]*object.Builtin{
 			case object.STRING_OBJ:
 				return &object.Boolean{Value: stringContains(obj.(*object.String), elm)}
 			default:
-				return NewError("first argument to `contains` must be of type ARRAY or STRING, got %s",
-					args[0].Type())
+				return NewError(errors.ArgumentToXAtYMustBeZError(0, "contains", "ARRAY or STRING", string(args[0].Type())))
 			}
 		},
 	},
 	"copy": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return &object.Error{Message: fmt.Sprintf("copy() takes 1 argument, %d given", len(args))}
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "copy"))
 			}
 			obj := args[0]
 
@@ -150,14 +147,14 @@ var builtins = map[string]*object.Builtin{
 				return &object.Hash{Pairs: obj.(*object.Hash).Pairs}
 
 			default:
-				return &object.Error{Message: fmt.Sprintf("Type %s cannot be copied", obj.Type())}
+				return NewError(errors.TypeCannotBeCopiedError(string(obj.Type())))
 			}
 		},
 	},
 	"type": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return &object.Error{Message: fmt.Sprintf("type() takes 1 argument, %d given", len(args))}
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "type"))
 			}
 			return &object.String{
 				Value: string(args[0].Type()),
@@ -167,7 +164,7 @@ var builtins = map[string]*object.Builtin{
 	"index": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
-				return &object.Error{Message: fmt.Sprintf("index() takes 2 arguments, %d given", len(args))}
+				return NewError(errors.RequiresXArgumentsError(2, len(args), "index"))
 			}
 
 			switch args[0].Type() {
@@ -181,46 +178,50 @@ var builtins = map[string]*object.Builtin{
 				return ArrayIndexOf(&object.Array{Elements: elements}, args[1])
 
 			default:
-				return NewError("type of argument 1 to index() must be ARRAY or STRING")
+				return NewError(errors.ArgumentToXAtYMustBeZError(0, "index", "ARRAY or STRING", string(args[0].Type())))
 			}
 		},
 	},
 	"sort": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return &object.Error{Message: fmt.Sprintf("sort() takes 1 argument, %d given", len(args))}
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "sort"))
 			}
 			switch args[0].Type() {
 			case object.ARRAY_OBJ:
 				return utils.SortObjectArray(args[0].(*object.Array))
 
 			default:
-				return NewError("argument to sort() must be of type ARRAY")
+				return NewError(errors.ArgumentToXMustBeYError("array", "sort", "ARRAY", string(args[0].Type())))
 			}
 		},
 	},
 	"reverse": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return &object.Error{Message: fmt.Sprintf("reverse() takes 1 argument, %d given", len(args))}
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "reverse"))
 			}
+			fmt.Println(args[0].Inspect())
 			switch args[0].Type() {
 			case object.ARRAY_OBJ:
 				return &object.Array{Elements: utils.ReverseSlice(args[0].(*object.Array).Elements)}
 
 			default:
-				return NewError("argument to reverse() must be of type ARRAY")
+				return NewError(errors.ArgumentToXMustBeYError("array", "reverse", "ARRAY", string(args[0].Type())))
 			}
 		},
 	},
 	"range": {
 		Fn: func(args ...object.Object) object.Object {
-			if len(args) < 2 || len(args) > 3 {
-				return &object.Error{Message: fmt.Sprintf("range() takes at least 2-3 arguments, %d given", len(args))}
+			if len(args) < 2 {
+				return NewError(errors.RequiresAtLeastXArgumentsError("range", len(args), 2))
+			}
+			if len(args) > 3 {
+				return NewError(errors.RequiresAtMostXArgumentsError("range", len(args), 3))
 			}
 			for i, arg := range args {
 				if _, ok := arg.(*object.Integer); !ok {
-					return &object.Error{Message: fmt.Sprintf("expected argument to range() at position %d to be INTEGER, %T given", i+1, arg)}
+					return NewError(errors.ArgumentToXAtYMustBeZError(i, "range", object.INTEGER_OBJ, arg.Inspect()))
 				}
 			}
 
@@ -301,13 +302,13 @@ func SliceArray(args ...object.Object) object.Object {
 
 	for i, arg := range args[1:] {
 		if arg.Type() != object.INTEGER_OBJ {
-			return NewError("ordinal argument to `slice` at index %d must be INTEGER, %s given", i, arg.Type())
+			return NewError(errors.ArgumentToXAtYMustBeZError(i, "slice", object.INTEGER_OBJ, string(arg.Type())))
 		}
 	}
 	start := int(args[1].(*object.Integer).Value)
 	originalArray := obj.(*object.Array).Elements
 	if start >= len(originalArray) {
-		return NewError("'start' argument out of bounds")
+		return NewError(errors.OutOfRangeError(start, len(originalArray), errors.ErrorConfig{}))
 	}
 	if start < 0 {
 		start = len(originalArray) + start
@@ -318,13 +319,13 @@ func SliceArray(args ...object.Object) object.Object {
 
 	end := int(args[2].(*object.Integer).Value)
 	if end > len(originalArray) {
-		return NewError("'end' argument out of bounds")
+		return NewError(errors.OutOfRangeError(end, len(originalArray), errors.ErrorConfig{}))
 	}
 	if end < 0 {
 		end = len(originalArray) + end
 	}
 	if end < start {
-		return NewError("invalid range %d:%d", start, end)
+		return NewError(errors.InvalidRangeError(start, end, errors.ErrorConfig{}))
 	}
 
 	slicedArr := originalArray[start:end]

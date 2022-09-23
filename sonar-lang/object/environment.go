@@ -1,6 +1,8 @@
 package object
 
-import "fmt"
+import (
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
+)
 
 func NewEnclosedEnvironment(outer *Environment) *Environment {
 	env := NewEnvironment()
@@ -41,7 +43,7 @@ func (e *Environment) Set(name string, val Object) Object {
 	// - check whether it's been initialised as a constant,
 	// - if it has, return an error
 	if e.Store[name] != nil && e.Readonly[name] {
-		return &Error{Message: fmt.Sprintf("SyntaxError: Invalid assignment to constant %s", name)}
+		return &Error{Conf: errors.ConstantAssignmentError(name)}
 	}
 
 	if len(e.allow) > 0 {
