@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/object"
 )
 
@@ -11,8 +12,7 @@ var TypesBuiltins = map[string]*object.Builtin{
 	"convertable": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
-				return NewError("convertable() takes 2 arguments, %d given",
-					len(args))
+				return NewError(errors.RequiresXArgumentsError(2, len(args), "convertable"))
 			}
 
 			value := args[0]
@@ -41,11 +41,10 @@ var TypesBuiltins = map[string]*object.Builtin{
 			return &object.Boolean{Value: result}
 		},
 	},
-	"string": {
+	"str": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("string() takes 1 argument, %d given",
-					len(args))
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "str"))
 			}
 
 			from := args[0]
@@ -61,8 +60,7 @@ var TypesBuiltins = map[string]*object.Builtin{
 	"int": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("int() takes 1 argument, %d given",
-					len(args))
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "int"))
 			}
 
 			return toInteger(args[0])
@@ -71,8 +69,7 @@ var TypesBuiltins = map[string]*object.Builtin{
 	"float": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("float() takes 1 argument, %d given",
-					len(args))
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "float"))
 			}
 
 			return toFloat(args[0])
@@ -81,8 +78,7 @@ var TypesBuiltins = map[string]*object.Builtin{
 	"map": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return NewError("map() takes 1 argument, %d given",
-					len(args))
+				return NewError(errors.RequiresXArgumentsError(1, len(args), "map"))
 			}
 
 			switch args[0].Type() {
@@ -99,7 +95,7 @@ var TypesBuiltins = map[string]*object.Builtin{
 
 				return &object.Hash{Pairs: pairs}
 			default:
-				return NewError("Expected argument to ARRAY, got %s", args[0].Type())
+				return NewError(errors.ArgumentToXMustBeYError("array", "map", object.ARRAY_OBJ, string(args[0].Type())))
 			}
 		},
 	},
@@ -144,7 +140,7 @@ func toInteger(from object.Object) object.Object {
 }
 
 func illegalConversion(from object.Object, to object.ObjectType) *object.Error {
-	return NewError("IllegalConversionError: %s to %s", from.Type(), to)
+	return NewError(errors.IllegalConversionError(string(from.Type()), string(to)))
 }
 
 var ConvertableMap map[object.ObjectType][]object.ObjectType = map[object.ObjectType][]object.ObjectType{

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/evaluator"
 	"github.com/icheka/sonar-lang/sonar-lang/inputs"
 	"github.com/icheka/sonar-lang/sonar-lang/lexer"
@@ -20,8 +21,16 @@ func evaluate(source string, options *lexer.LexerOptions) {
 		repl.PrintParserErrors(os.Stderr, p.Errors())
 		return
 	}
-	if evaluated := evaluator.Eval(program, object.NewEnvironment()); evaluated != nil && evaluated.Type() == object.ERROR_OBJ {
-		fmt.Println(evaluated.Inspect())
+
+	evaluated := evaluator.Eval(program, object.NewEnvironment())
+
+	if evaluated != nil && evaluated.Type() == object.ERROR_OBJ {
+		if obj, ok := evaluated.(*object.Error); ok {
+			if conf, ok := obj.Conf.(errors.Error); ok {
+				repl.PrintParserErrors(os.Stderr, []errors.Error{conf})
+			}
+			return
+		}
 	}
 }
 

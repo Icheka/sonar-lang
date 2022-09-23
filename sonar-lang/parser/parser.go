@@ -1,10 +1,10 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/icheka/sonar-lang/sonar-lang/ast"
+	"github.com/icheka/sonar-lang/sonar-lang/errors"
 	"github.com/icheka/sonar-lang/sonar-lang/lexer"
 	"github.com/icheka/sonar-lang/sonar-lang/token"
 )
@@ -59,7 +59,7 @@ type (
 
 type Parser struct {
 	l      *lexer.Lexer
-	errors []string
+	errors []errors.Error
 
 	curToken  token.Token
 	peekToken token.Token
@@ -73,7 +73,7 @@ type Parser struct {
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
-		errors: []string{},
+		errors: []errors.Error{},
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
@@ -150,19 +150,83 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	}
 }
 
-func (p *Parser) Errors() []string {
+func (p *Parser) Errors() []errors.Error {
 	return p.errors
 }
 
-func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
-		t, p.peekToken.Type)
-	p.errors = append(p.errors, msg)
+func (p *Parser) findPrevNewline() int {
+	input := (*p).l.Input()
+	pos := (*p).l.Position() - 2
+	found := false
+
+	for !found && pos > 0 && pos < p.l.InputLength-1 {
+		pos--
+		if input[pos] == '\n' {
+			found = true
+		}
+	}
+
+	return pos
 }
 
-func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
-	p.errors = append(p.errors, msg)
+func (p *Parser) findNextNewline() int {
+	input := (*p).l.Input()
+	pos := (*p).l.Position() - 2
+	found := false
+
+	for !found && pos >= 0 && pos < p.l.InputLength-1 {
+		pos++
+		if input[pos] == '\n' {
+			found = true
+		}
+	}
+
+	return pos + 1
+}
+
+func (p *Parser) getErrorConfig() errors.ErrorConfig {
+	end := (*p).findNextNewline()   // index to stop returning LineText at
+	start := (*p).findPrevNewline() // index to start returning LineText from
+	if end > (*p).l.InputLength {
+		end = (*p).l.InputLength
+	}
+	if end < 0 {
+		end = 0
+	}
+	if start > end {
+		start = end
+	}
+	if start < 0 {
+		start = 0
+	}
+
+	textPos := p.l.Position() - start
+	lineText := p.l.LineText(start, end)
+
+	if len(lineText) > 0 {
+		for lineText[len(lineText)-1] == '\n' || lineText[len(lineText)-1] == ' ' || lineText[len(lineText)-1] == '\t' || lineText[len(lineText)-1] == '\r' {
+			lineText = lineText[0 : len(lineText)-1]
+			if len(lineText) == 0 {
+				break
+			}
+		}
+	}
+
+	return errors.ErrorConfig{
+		File:                  p.l.File,
+		Line:                  p.l.Line,
+		Column:                p.l.Column,
+		LineText:              lineText,
+		LineTextTokenPosition: textPos,
+	}
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	p.errors = append(p.errors, errors.PeekError(t, p.peekToken.Literal, p.getErrorConfig()))
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType, s string) {
+	p.errors = append(p.errors, errors.NoPrefixParseFnError(s, t, p.getErrorConfig()))
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -223,6 +287,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	p.nextToken()
 
 	stmt.Value = p.parseExpression(LOWEST)
+	stmt.TokenInfo = p.getErrorConfig()
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -269,7 +334,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
-		p.noPrefixParseFnError(p.curToken.Type)
+		p.noPrefixParseFnError(p.curToken.Type, p.curToken.Literal)
 		return nil
 	}
 	leftExp := prefix()
@@ -313,8 +378,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
-		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
-		p.errors = append(p.errors, msg)
+		p.errors = append(p.errors, errors.CouldNotParseAsIntegerError(p.curToken.Literal, p.getErrorConfig()))
 		return nil
 	}
 
@@ -331,8 +395,7 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 		return lit
 	}
 
-	msg := fmt.Sprintf("could not parse %q as float", p.curToken.Literal)
-	p.errors = append(p.errors, msg)
+	p.errors = append(p.errors, errors.CouldNotParseAsFloatError(p.curToken.Literal, p.getErrorConfig()))
 	return nil
 }
 
@@ -643,8 +706,6 @@ func (p *Parser) parseForStatement() ast.Statement {
 		return nil
 	}
 
-	// stmt.Condition = p.parseExpression(LOWEST)
-
 	if !p.expectPeek(token.RPAREN) {
 		return nil
 	}
@@ -664,7 +725,7 @@ func (p *Parser) parseAssignmentExpression(left ast.Expression) ast.Expression {
 	exp := &ast.AssignmentExpression{Token: p.curToken}
 	identifier, ok := left.(*ast.Identifier)
 	if !ok {
-		p.errors = append(p.errors, fmt.Sprintf("Expected identifier in assignment expression, got %s", left.TokenLiteral()))
+		p.errors = append(p.errors, errors.ExpectedIdentifierInAssignmentError(left.TokenLiteral(), p.getErrorConfig()))
 	}
 
 	exp.Identifier = identifier
